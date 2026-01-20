@@ -1,175 +1,273 @@
-import numpy as np
+"""
+Main script for training and evaluating M3N on HMC data.
+Compares performance across different training set sizes against optimal Bayes classifier.
+
+Run from the same directory where dataset_HMC.py and SimpleM3N.py are located.
+All outputs will be saved in the same directory.
+"""
+
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import matplotlib.pyplot as plt
+import numpy as np
+import os
+from NeuralM3N import NeuralM3N
+from dataset_HMC import generate_hmc_data, ForwardBackwardClassifier
 from SimpleM3N import SimpleM3N_NN, M3NTrainer
-from dataset_HMC import generate_hmc_data, OptimalBayesClassifier
-import seaborn as sns
+from utils import (
+    compute_error, 
+    save_model, 
+    plot_training_results, 
+    save_results_summary,
+    print_summary
+)
 
 
-def evaluate(model, trainer, X, Y):
-    predictions = trainer.predict(X)
-    accuracy = (predictions == Y).float().mean().item()
-    return accuracy
+class EarlyStopping:
+    """
+    Early stopping to stop training when test error stops improving.
+    """
+    def __init__(self, patience=10, min_delta=0.1):
+        """
+        Args:
+            patience: Number of epochs to wait after last improvement
+            min_delta: Minimum change in error to qualify as an improvement
+        """
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.best_error = float('inf')
+        self.should_stop = False
+    
+    def __call__(self, current_error):
+        if current_error < self.best_error - self.min_delta:
+            self.best_error = current_error
+            self.counter = 0
+        else:
+            self.counter += 1
+            if self.counter >= self.patience:
+                self.should_stop = True
+        return self.should_stop
 
 
-def run_experiment(num_states=30, seq_len=15, num_train=200, num_test=40, num_epochs=10, batch_size=32, seed=123, run_name="Run",p_yt_ytm1=0.7, p_xt_yt=0.7):
-    print(f"\n=== {run_name} ===")
-    print("Generating data...")
-    num_samples = num_train + num_test
-    X, Y = generate_hmc_data(num_samples, seq_len, num_states, seed=seed,p_yt_ytm1=p_yt_ytm1, p_xt_yt=p_xt_yt)
-    X_train, Y_train = X[:num_train], Y[:num_train]
-    X_test, Y_test = X[num_train:], Y[num_train:]
-
-    # Bayes optimal classifier
-    print("\nEvaluating Optimal Bayes Classifier...")
-    bayes_classifier = OptimalBayesClassifier(num_states=num_states, p_yt_ytm1=p_yt_ytm1, p_xt_yt=p_xt_yt)
-    bayes_train_acc = (bayes_classifier.predict(X_train) == Y_train).float().mean().item()
-    bayes_test_acc = (bayes_classifier.predict(X_test) == Y_test).float().mean().item()
-    print(f"Bayes Optimal Train Accuracy: {bayes_train_acc:.4f}")
-    print(f"Bayes Optimal Test Accuracy: {bayes_test_acc:.4f}")
-
-    # Neural network
-    print("\nTraining Neural Network...")
-    model = SimpleM3N_NN(input_dim=num_states, num_classes=num_states)
-    trainer = M3NTrainer(model, learning_rate=0.01, C=1.0)
-
-    train_accs, test_accs, losses = [], [], []
-
-    for epoch in range(num_epochs):
-        epoch_loss = 0
-        num_batches = 0
-
-        for i in range(0, num_train, batch_size):
-            end_idx = min(i + batch_size, num_train)
-            X_batch = X_train[i:end_idx]
-            Y_batch = Y_train[i:end_idx]
-
-            loss = trainer.train_step(X_batch, Y_batch)
+def train_and_evaluate(num_train_samples, config, test_X, test_Y, output_dir, verbose=True):
+    """
+    Train M3N model with early stopping, save best model.
+    
+    Returns:
+        history: Dictionary with training history and best results
+    """
+    # Generate training data
+    train_X, train_Y = generate_hmc_data(
+        num_samples=num_train_samples,
+        seq_len=config['seq_len'],
+        num_states=config['num_states'],
+        p_yt_ytm1=config['p_yt_ytm1'],
+        p_xt_yt=config['p_xt_yt'],
+        seed=config['seed'] + num_train_samples  # Different seed per training size
+    )
+    
+    # Initialize model
+    model = NeuralM3N(
+        input_dim=config['num_states'],
+        num_classes=config['num_states']
+    )
+    
+    trainer = M3NTrainer(
+        model,
+        learning_rate=config['learning_rate'],
+        C=config['C'],
+        weight_decay=config['weight_decay']
+    )
+    
+    # Initialize early stopping
+    early_stopping = EarlyStopping(
+        patience=config['early_stop_patience'],
+        min_delta=config['early_stop_min_delta']
+    )
+    
+    # Training history
+    history = {
+        'epochs': [],
+        'train_loss': [],
+        'train_error': [],
+        'test_error': [],
+        'best_test_error': float('inf'),
+        'best_epoch': 0,
+        'early_stopped': False
+    }
+    
+    # Best model state
+    best_model_state = None
+    
+    batch_size = min(config['batch_size'], num_train_samples)
+    num_batches = max(1, num_train_samples // batch_size)
+    
+    for epoch in range(config['num_epochs']):
+        epoch_loss = 0.0
+        
+        # Shuffle training data
+        perm = torch.randperm(num_train_samples)
+        train_X_shuffled = train_X[perm]
+        train_Y_shuffled = train_Y[perm]
+        
+        for batch_idx in range(num_batches):
+            start_idx = batch_idx * batch_size
+            end_idx = min(start_idx + batch_size, num_train_samples)
+            
+            batch_X = train_X_shuffled[start_idx:end_idx]
+            batch_Y = train_Y_shuffled[start_idx:end_idx]
+            
+            loss = trainer.train_step(batch_X, batch_Y)
             epoch_loss += loss
-            num_batches += 1
-
-        avg_loss = epoch_loss / num_batches
-        losses.append(avg_loss)
-
-        # Evaluate
-        train_acc = evaluate(model, trainer, X_train, Y_train)
-        test_acc = evaluate(model, trainer, X_test, Y_test)
-        train_accs.append(train_acc)
-        test_accs.append(test_acc)
-
-        print(f"Epoch {epoch+1}/{num_epochs} | Loss: {avg_loss:.4f} | "
-              f"Train Acc: {train_acc:.4f} | Test Acc: {test_acc:.4f} | "
-              f"Gap to Bayes: {bayes_test_acc - test_acc:.4f}")
-
-    # Final summary
-    print("\n" + "="*60)
-    print(f"FINAL RESULTS ({run_name}):")
-    print("="*60)
-    print(f"Bayes Optimal Test Accuracy: {bayes_test_acc:.4f}")
-    print(f"Neural Network Test Accuracy: {test_accs[-1]:.4f}")
-    print(f"Gap to Optimal: {bayes_test_acc - test_accs[-1]:.4f}")
-    print(f"Percentage of Optimal: {100 * test_accs[-1] / bayes_test_acc:.2f}%")
-
-    return model, bayes_test_acc, test_accs[-1]
-
-
-def plot_pairwise_weights(weights, title="Pairwise Weights", filename=None):
-    plt.figure(figsize=(6,5))
-    sns.heatmap(weights.detach().cpu().numpy(), annot=False, cmap="coolwarm")
-    plt.title(title)
-    plt.xlabel("y_t")
-    plt.ylabel("y_{t-1}")
-    if filename:
-        plt.savefig(filename)
-    plt.show()
-
-def plot_unary_weights(model, title="Unary Weights", filename=None):
-    W = model.unary_net[0].weight.detach().cpu().numpy()
-    plt.figure(figsize=(8,6))
-    sns.heatmap(W, annot=False, cmap="viridis")
-    plt.title(title)
-    plt.xlabel("Input Features")
-    plt.ylabel("Classes")
-    if filename:
-        plt.savefig(filename)
-    plt.show()
-
-def plot_pairwise_difference(weights1, weights2, title="Pairwise Weights Difference", filename=None):
-    diff = (weights1 - weights2).detach().cpu().numpy()
-    plt.figure(figsize=(6,5))
-    sns.heatmap(diff, annot=False, cmap="bwr", center=0)
-    plt.title(title)
-    plt.xlabel("y_t")
-    plt.ylabel("y_{t-1}")
-    if filename:
-        plt.savefig(filename)
-    plt.show()
-
-def plot_unary_difference(model1, model2, title="Unary Weights Difference", filename=None):
-    W1 = model1.unary_net[0].weight.detach().cpu()
-    W2 = model2.unary_net[0].weight.detach().cpu()
-    diff = (W1 - W2).numpy()
-    plt.figure(figsize=(8,6))
-    sns.heatmap(diff, annot=False, cmap="bwr", center=0)
-    plt.title(title)
-    plt.xlabel("Input Features")
-    plt.ylabel("Classes")
-    if filename:
-        plt.savefig(filename)
-    plt.show()
+        
+        epoch_loss /= num_batches
+        
+        # Evaluate periodically
+        if (epoch + 1) % config['eval_every'] == 0 or epoch == 0:
+            with torch.no_grad():
+                train_pred = trainer.predict(train_X)
+                train_error = compute_error(train_pred, train_Y)
+                
+                test_pred = trainer.predict(test_X)
+                test_error = compute_error(test_pred, test_Y)
+            
+            history['epochs'].append(epoch + 1)
+            history['train_loss'].append(epoch_loss)
+            history['train_error'].append(train_error)
+            history['test_error'].append(test_error)
+            
+            # Track best model
+            if test_error < history['best_test_error']:
+                history['best_test_error'] = test_error
+                history['best_epoch'] = epoch + 1
+                best_model_state = model.state_dict().copy()
+            
+            if verbose:
+                print(f"  Epoch {epoch+1:3d}: Loss={epoch_loss:.4f}, "
+                      f"Train Err={train_error:.2f}%, Test Err={test_error:.2f}%")
+            
+            # Check early stopping
+            if early_stopping(test_error):
+                if verbose:
+                    print(f"  Early stopping at epoch {epoch+1} (no improvement for {config['early_stop_patience']} evaluations)")
+                history['early_stopped'] = True
+                break
+    
+    # Save best model
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
+        model_path = os.path.join(output_dir, f'best_model_n{num_train_samples}.pt')
+        save_model(
+            model, 
+            model_path, 
+            config, 
+            num_train_samples, 
+            history['best_test_error'],
+            history['best_epoch']
+        )
+        if verbose:
+            print(f"  Saved best model (epoch {history['best_epoch']}, error {history['best_test_error']:.2f}%)")
+    
+    return history
 
 
-# --- Run the comparison ---
+def main():
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = script_dir  # Save everything in the same directory
+    
+    # Configuration
+    config = {
+        'num_states': 25,
+        'seq_len': 30,
+        'p_yt_ytm1': 0.7,
+        'p_xt_yt': 0.7,
+        'seed': 42,
+        'num_epochs': 200,
+        'batch_size': 32,
+        'learning_rate': 0.01,
+        'C': 1.0,
+        'weight_decay': 0.01,
+        'eval_every': 1,
+        'num_test_samples': 200,
+        'early_stop_patience': 5,      # Stop after 5 evaluations without improvement
+        'early_stop_min_delta': 0.1     # Minimum improvement threshold
+    }
+    
+    # Training set sizes to compare
+    train_sizes = [10, 50, 100, 250 ,500]
+    
+    print("=" * 60)
+    print("M3N Training Experiment")
+    print("=" * 60)
+    print(f"Output directory: {output_dir}")
+    print(f"Config: {config['num_states']} states, seq_len={config['seq_len']}")
+    print(f"HMC params: p(y_t|y_t-1)={config['p_yt_ytm1']}, p(x_t|y_t)={config['p_xt_yt']}")
+    print(f"Early stopping: patience={config['early_stop_patience']}, min_delta={config['early_stop_min_delta']}")
+    print("=" * 60)
+    
+    # Generate test data (fixed for all experiments)
+    print("\nGenerating test data...")
+    test_X, test_Y = generate_hmc_data(
+        num_samples=config['num_test_samples'],
+        seq_len=config['seq_len'],
+        num_states=config['num_states'],
+        p_yt_ytm1=config['p_yt_ytm1'],
+        p_xt_yt=config['p_xt_yt'],
+        seed=config['seed'] + 1 # Different seed for test
+    )
+    
+    # Compute optimal Bayes error
+    print("Computing optimal Bayes classifier error...")
+    bayes_classifier = ForwardBackwardClassifier(
+        num_states=config['num_states'],
+        p_yt_ytm1=config['p_yt_ytm1'],
+        p_xt_yt=config['p_xt_yt']
+    )
+    bayes_pred = bayes_classifier.predict(test_X)
+    bayes_error = compute_error(bayes_pred, test_Y)
+    print(f"Optimal Bayes error: {bayes_error:.2f}%")
+    print("=" * 60)
+    
+    # Train models for each training set size
+    results = {}
+    
+    for n_train in train_sizes:
+        print(f"\n--- Training with {n_train} samples ---")
+        history = train_and_evaluate(
+            num_train_samples=n_train,
+            config=config,
+            test_X=test_X,
+            test_Y=test_Y,
+            output_dir=output_dir,
+            verbose=True
+        )
+        results[n_train] = history
+    
+    # Generate plots
+    print("\n" + "=" * 60)
+    print("Generating outputs...")
+    
+    plot_path = plot_training_results(results, train_sizes, bayes_error, config, output_dir)
+    print(f"  Saved: {os.path.basename(plot_path)}")
+    
+    summary_path = save_results_summary(results, train_sizes, bayes_error, config, output_dir)
+    print(f"  Saved: {os.path.basename(summary_path)}")
+    
+    # Print summary
+    print_summary(results, train_sizes, bayes_error)
+    
+    return results, bayes_error
+
+
 if __name__ == "__main__":
+    results, bayes_error = main()
 
-    num_states = 15
-    seq_len = 30
-    num_train = 400
-    num_test = 80
-    num_epochs = 20
-    batch_size = 32
-    seed = 123
-    p_yt_ytm1=0.7
-    p_xt_yt=0.7
 
-    # Call run_experiment with parameters
-    model1, bayes_acc, test_acc1 = run_experiment(
-        run_name="Run 1",
-        num_states=num_states,
-        seq_len=seq_len,
-        num_train=num_train,
-        num_test=num_test,
-        num_epochs=num_epochs,
-        batch_size=batch_size,
-        seed=seed,
-        p_yt_ytm1=p_yt_ytm1,
-        p_xt_yt=p_xt_yt
-    )
 
-    model2, _, test_acc2 = run_experiment(
-        run_name="Run 2",
-        num_states=num_states,
-        seq_len=seq_len,
-        num_train=num_train,
-        num_test=num_test,
-        num_epochs=num_epochs,
-        batch_size=batch_size,
-        seed=seed,
-        p_yt_ytm1=p_yt_ytm1,
-        p_xt_yt=p_xt_yt
-    )
 
-    print(f"\nTest Accuracy Run 1: {test_acc1:.4f}")
-    print(f"Test Accuracy Run 2: {test_acc2:.4f}")
-
-    # --- Graphs ---
-    plot_pairwise_weights(model1.pairwise_weights, title="Pairwise Weights - Run 1", filename="graphs/pairwise_run1.png")
-    plot_pairwise_weights(model2.pairwise_weights, title="Pairwise Weights - Run 2", filename="graphs/pairwise_run2.png")
-    plot_pairwise_difference(model1.pairwise_weights, model2.pairwise_weights, title="Pairwise Weights Difference", filename="graphs/pairwise_diff.png")
-
-    plot_unary_weights(model1, title="Unary Weights - Run 1", filename="graphs/unary_run1.png")
-    plot_unary_weights(model2, title="Unary Weights - Run 2", filename="graphs/unary_run2.png")
-    plot_unary_difference(model1, model2, title="Unary Weights Difference", filename="graphs/unary_diff.png")
+#grap testovaci chyba - pocet testovacich dat -10,100,1000 .... + chyba bayes optimal
+#popsat prechodove funkce 
+#pracovat na psani dp - baysovsky predictor s hamming loss, generovani dat HMM, Structured output SVM + DP
+#baumwells algorithm for optimal classifier - e stepmarginal posterious prob - backward forward, minimalizuje hamming loss
+#LP - relaxaci
+#ukladat si modely - pro porovnani
