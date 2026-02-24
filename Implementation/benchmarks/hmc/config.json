@@ -1,0 +1,12 @@
+{
+  "num_samples": 50000,
+  "seq_len": 30,
+  "num_states": 10,
+  "p_yt_ytm1": 0.7,
+  "p_xt_yt": 0.7,
+  "hmc_seed": 42,
+  "mnist_seed": 123,
+  "train_size": 30000,
+  "val_size": 10000,
+  "test_size": 10000
+}

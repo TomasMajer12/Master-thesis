@@ -1,0 +1,43 @@
+Guideline:
+
+Design a method for training a Sudoku puzzle solver from examples of puzzle assignments and their corresponding solutions. 
+The solver should support both symbolic inputs (numerical grid representations) and visual inputs (images of Sudoku puzzles). 
+The core of the solver will be a neural network whose final decision layer is a Markov Network predictor. 
+An efficient learning algorithm for this prediction model must be designed and implemented. 
+The resulting system will be empirically evaluated and compared against suitable baseline approaches. 
+Requirements 
+• Become familiar with methods for learning neural networks and Markov networks. 
+• Design and implement a Python library for training and evaluating the proposed predictors. 
+• Create a benchmark dataset of Sudoku puzzles with ground-truth solutions, covering both symbolic and visual inputs. 
+• Implement straightforward baseline solutions, for example: a two-stage system consisting of single-digit OCR followed by a hard-coded Sudoku solver. 
+• Apply the proposed system to the Sudoku benchmark and perform a statistical evaluation of the results, including comparison with baseline methods.
+Seznam doporučené literatury:
+1. Franc, V., Yermakov, M. Learning Maximum Margin Markov Networks from Examples with Missing Labels. ACML 2021. 
+2. Franc, V., Průša, D., Yermakov, M. Consistent and Tractable Algorithm for Markov Network Learning. ECML 2022. 
+3. Wang, P., Donti, P., Wilder, B., Kolter, J. SATNet: Bridging Deep Learning and Logical Reasoning Using a Differentiable Satisfiability Solver. ICML, 2019.
+
+
+
+
+Final output:
+- benchmark HMC symbolic + vizual (MNIST): trn:30k, val: 10k, test: 10k
+- benchmark symbolic + vizual sudoku: trn:30k, val:10k, test:10k
+
+Evaluation of benchamrk:
+1. Test error: 0/1 a Hamming-loss
+2. Learning curve: number training examples vs tst+trn error
+
+Python modul
+1. Single config - defines training, val, testing data + architecture
+2 Config defining the architecture. Supported architectures:
+    a. neighbourhood structure is either chain or general graph
+    b. input is either symbolic or image
+    c. input is either sequence or a single image
+
+It will support backbones implemented in Pytorch
+
+- Baseline: Two stage approach for solving visual sudoku
+
+
+
+
