@@ -1,115 +1,81 @@
 """
-LP relaxation for MAP inference via max-sum diffusion (Werner, 2007).
+LP relaxation for MAP inference using Schlesinger's ADAG algorithm.
 
-Tomáš Werner's approach solves the LP relaxation of the MAP-MRF problem
-by iteratively reparameterizing the potentials until the max-marginals
-become consistent across all edges.
+Uses the manet library (Franc & Werner) for solving the LP relaxation of the
+MAP-MRF problem via the ADAG (Adaptive Direction-Alternating primal-dual Gap
+reduction) algorithm — an efficient solver for the max-sum LP relaxation on
+arbitrary pairwise graphical models.
 
-Key idea:
-    The MAP problem is:  max_y  Σ_i θ_i(y_i) + Σ_{(i,j)∈E} θ_ij(y_i, y_j)
-
-    The LP relaxation replaces the integer constraint y_i ∈ {1..K} with
-    marginal polytope constraints (local consistency).
-
-    Max-sum diffusion solves this by reparameterizing potentials:
-    we can shift values between node and edge potentials without
-    changing the objective, aiming for "consistent max-marginals."
-
-    At convergence (guaranteed for trees, including chains):
-        max_l [θ_ij(k,l) + θ_j(l)]  =  θ_i(k) + const   for all k
-
-    The decoded labeling is simply: y_i = argmax_k θ_i(k)
-
-For tree-structured graphs (chains, trees), the LP relaxation is tight:
-it gives the exact MAP solution, same as Viterbi. For loopy graphs, the
-solution may be fractional, but rounding argmax_k θ_i(k) is a standard
-heuristic that often works well.
+For chain-structured graphs, the LP relaxation is tight and gives the same
+result as Viterbi. For general graphs (grids, loopy), ADAG solves the dual
+of the local marginal polytope LP.
 
 References:
     Werner, T. (2007). "A Linear Programming Approach to Max-Sum Problem:
     A Review." IEEE TPAMI, 29(7), 1165-1179.
+
+    Franc, V. & Savchynskyy, B. (2017). "On the direction of ADAG."
+
+Requires:
+    manet library compiled and on PYTHONPATH.
+    See libs/manet/ — compile with:
+        cd libs/manet/manet/adag_solver/
+        g++ -O3 -Wall -shared -std=c++11 -fPIC libadag.cpp -o libadag.so
+        python3 build_adag_cffi.py
 """
 
 import torch
+import numpy as np
+from manet.maxsum import adag
 
 
-def max_sum_diffusion(unary, pairwise, edges, max_iter=200, tol=1e-6):
-    """Max-sum diffusion for MAP inference on any pairwise MRF.
+def _to_adag_inputs(unary_single, pairwise, edges):
+    """Convert our PyTorch tensors to manet's adag numpy format.
 
-    Iteratively reparameterizes node and edge potentials until
-    max-marginals are consistent. For trees (including chains),
-    this converges to the exact MAP solution.
+    Our format:
+        unary_single: [T, K]        — unary potentials for one sample
+        pairwise:     [K, K]        — shared pairwise potentials
+        edges:        [num_edges, 2] — edge list
+
+    manet's adag format:
+        Q: [nK, nT]                — unary (transposed)
+        G: [nK, nK, nG]            — pairwise indexed by edge type
+        E: [3, nE]                 — each column is (node_i, node_j, pairwise_index)
+    """
+    Q = unary_single.detach().cpu().numpy().T  # [K, T]
+
+    # All edges share the same pairwise, so nG=1, index=0 for all edges
+    pw = pairwise.detach().cpu().numpy()
+    G = pw[:, :, np.newaxis]  # [K, K, 1]
+
+    nE = edges.shape[0]
+    E = np.zeros((3, nE), dtype=np.uintc)
+    E[0, :] = edges[:, 0].cpu().numpy()
+    E[1, :] = edges[:, 1].cpu().numpy()
+    E[2, :] = 0  # all edges use pairwise function index 0
+
+    return Q, G, E
+
+
+def adag_decode_single(unary_single, pairwise, edges):
+    """Run ADAG on a single sample.
 
     Args:
-        unary:    [batch, N, K]    — unary potentials per node
-        pairwise: [K, K]          — pairwise potentials (shared across edges)
-        edges:    [num_edges, 2]   — edge list (LongTensor)
-        max_iter: maximum number of iterations
-        tol:      convergence threshold on max absolute update
+        unary_single: [T, K]       — unary potentials
+        pairwise:     [K, K]       — pairwise potentials
+        edges:        [num_edges, 2]
 
     Returns:
-        y:          [batch, N] (LongTensor) — decoded labeling
-        info:       dict with convergence diagnostics
+        labels: [T] numpy int array
+        energy: float
     """
-    batch, N, K = unary.shape
-    E = edges.shape[0]
-
-    # Reparameterized potentials (work on copies)
-    theta_node = unary.clone()                     # [batch, N, K]
-    # Per-edge potentials: start from shared pairwise, expanded per edge
-    theta_edge = pairwise.unsqueeze(0).unsqueeze(0).expand(batch, E, K, K).clone()
-    # theta_edge[b, e, k, l] = potential for edge e, labels (k, l)
-
-    converged_at = max_iter
-    for iteration in range(max_iter):
-        max_change = 0.0
-
-        for e in range(E):
-            i, j = edges[e, 0].item(), edges[e, 1].item()
-
-            # --- Update node i from edge (i,j) ---
-            # Max-marginal at i through edge e:
-            #   gamma_i(k) = max_l [ theta_edge(k, l) + theta_node_j(l) ]
-            # theta_edge[:, e]: [batch, K_i, K_j]
-            # theta_node[:, j]: [batch, K_j]
-            gamma_i = (theta_edge[:, e, :, :] + theta_node[:, j, :].unsqueeze(1)).max(dim=2).values
-            # gamma_i: [batch, K]
-
-            # Reparameterization: transfer half the difference
-            delta_i = (gamma_i - theta_node[:, i, :]) / 2.0   # [batch, K]
-            theta_node[:, i, :] += delta_i
-            theta_edge[:, e, :, :] -= delta_i.unsqueeze(2)     # subtract from all l
-
-            # --- Update node j from edge (i,j) ---
-            # gamma_j(l) = max_k [ theta_edge(k, l) + theta_node_i(k) ]
-            gamma_j = (theta_edge[:, e, :, :] + theta_node[:, i, :].unsqueeze(2)).max(dim=1).values
-            # gamma_j: [batch, K]
-
-            delta_j = (gamma_j - theta_node[:, j, :]) / 2.0   # [batch, K]
-            theta_node[:, j, :] += delta_j
-            theta_edge[:, e, :, :] -= delta_j.unsqueeze(1)     # subtract from all k
-
-            max_change = max(max_change,
-                             delta_i.abs().max().item(),
-                             delta_j.abs().max().item())
-
-        if max_change < tol:
-            converged_at = iteration + 1
-            break
-
-    # Decode: take argmax of reparameterized node potentials
-    y = theta_node.argmax(dim=2)
-
-    info = {
-        'converged_at': converged_at,
-        'max_change': max_change,
-        'theta_node': theta_node,   # useful for inspecting marginals
-    }
-    return y, info
+    Q, G, E = _to_adag_inputs(unary_single, pairwise, edges)
+    labels, energy = adag(Q, G, E)
+    return labels, energy
 
 
-def lp_decode(unary, pairwise, edges=None, max_iter=200, tol=1e-6):
-    """LP relaxation decoding — drop-in replacement for viterbi_decode.
+def lp_decode(unary, pairwise, edges=None):
+    """LP relaxation decoding via ADAG — drop-in replacement for viterbi_decode.
 
     If edges is None, assumes a chain graph (matching viterbi_decode interface).
 
@@ -117,51 +83,49 @@ def lp_decode(unary, pairwise, edges=None, max_iter=200, tol=1e-6):
         unary:    [batch, T, K]  — unary potentials
         pairwise: [K, K]        — pairwise potentials
         edges:    [num_edges, 2] — edge list (optional, defaults to chain)
-        max_iter: max diffusion iterations
-        tol:      convergence tolerance
 
     Returns:
         y: [batch, T] (LongTensor) — decoded labeling
     """
-    if edges is None:
-        T = unary.shape[1]
-        edges = _chain_edges(T, unary.device)
+    batch, T, K = unary.shape
+    device = unary.device
 
-    y, _ = max_sum_diffusion(unary, pairwise, edges, max_iter, tol)
+    if edges is None:
+        edges = _chain_edges(T, device)
+
+    y = torch.zeros(batch, T, dtype=torch.long, device=device)
+    for b in range(batch):
+        labels, _ = adag_decode_single(unary[b], pairwise, edges)
+        y[b] = torch.from_numpy(labels.astype(np.int64)).to(device)
+
     return y
 
 
-def loss_augmented_lp(unary, pairwise, y_true, edges=None, max_iter=200, tol=1e-6):
+def loss_augmented_lp(unary, pairwise, y_true, edges=None):
     """Loss-augmented LP relaxation for structured SVM training.
 
     Solves: y* = argmax_y [ F(y|x) + Delta(y, y_true) ]
-
-    Same augmented-unary trick as loss_augmented_viterbi: add +1 to the
-    unary potential of every class that differs from y_true at each position.
 
     Args:
         unary:    [batch, T, K]  — unary potentials
         pairwise: [K, K]        — pairwise potentials
         y_true:   [batch, T]    — ground truth labels
         edges:    [num_edges, 2] — edge list (optional, defaults to chain)
-        max_iter: max diffusion iterations
-        tol:      convergence tolerance
 
     Returns:
         y_star: [batch, T] (LongTensor) — most-violating labeling
     """
-    batch, T, K = unary.shape
+    batch, T, n_classes = unary.shape
 
     if edges is None:
         edges = _chain_edges(T, unary.device)
 
     # Hamming loss augmentation: +1 for every class != y_true
-    loss_term = torch.ones(batch, T, K, device=unary.device)
+    loss_term = torch.ones(batch, T, n_classes, device=unary.device)
     loss_term.scatter_(2, y_true.unsqueeze(-1), 0.0)
 
     augmented_unary = unary.detach() + loss_term
-    y_star, _ = max_sum_diffusion(augmented_unary, pairwise.detach(), edges, max_iter, tol)
-    return y_star
+    return lp_decode(augmented_unary, pairwise.detach(), edges)
 
 
 def _chain_edges(seq_len, device=None):
