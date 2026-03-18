@@ -37,24 +37,21 @@ def _to_adag_inputs(unary_single, pairwise, edges):
         pairwise:     [K, K]        — shared pairwise potentials
         edges:        [num_edges, 2] — edge list
 
-    manet's adag format:
+    manet's adag format (see examples/map_inference.ipynb):
         Q: [nK, nT]                — unary (transposed)
-        G: [nK, nK, nG]            — pairwise indexed by edge type
+        G: [nK, nK]                — pairwise (2D, single shared function)
         E: [3, nE]                 — each column is (node_i, node_j, pairwise_index)
     """
-    Q = unary_single.detach().cpu().numpy().T  # [K, T]
-
-    # All edges share the same pairwise, so nG=1, index=0 for all edges
-    pw = pairwise.detach().cpu().numpy()
-    G = pw[:, :, np.newaxis]  # [K, K, 1]
+    Q = unary_single.detach().cpu().numpy().astype(np.float64).T  # [K, T]
+    G = pairwise.detach().cpu().numpy().astype(np.float64)        # [K, K]
 
     nE = edges.shape[0]
-    E = np.zeros((3, nE), dtype=np.uintc)
-    E[0, :] = edges[:, 0].cpu().numpy()
-    E[1, :] = edges[:, 1].cpu().numpy()
-    E[2, :] = 0  # all edges use pairwise function index 0
+    E_np = np.zeros((3, nE), dtype=int)
+    E_np[0, :] = edges[:, 0].cpu().numpy()
+    E_np[1, :] = edges[:, 1].cpu().numpy()
+    E_np[2, :] = 0  # all edges use pairwise function index 0
 
-    return Q, G, E
+    return Q, G, E_np
 
 
 def adag_decode_single(unary_single, pairwise, edges):

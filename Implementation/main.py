@@ -1,11 +1,3 @@
-"""
-Main script for training and evaluating M3N on HMC data.
-Compares performance across different training set sizes against optimal Bayes classifier.
-
-Run from the same directory where dataset_HMC.py and SimpleM3N.py are located.
-All outputs will be saved in the same directory.
-"""
-
 import torch
 import numpy as np
 import os

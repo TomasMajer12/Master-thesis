@@ -135,7 +135,7 @@ class ForwardBackwardClassifier:
         
         gamma = alpha * beta
         gamma_sum = gamma.sum(axis=1, keepdims=True)
-        gamma_sum[gamma_sum == 0] = 1  # Avoid division by zero
+        gamma_sum[gamma_sum == 0] = 1 
         gamma = gamma / gamma_sum
         
         return gamma
