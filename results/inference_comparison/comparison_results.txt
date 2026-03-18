@@ -1,0 +1,32 @@
+Viterbi vs LP Relaxation — Comparison Results
+======================================================================
+
+Configuration:
+  num_states: 20
+  seq_len: 50
+  p_self: 0.7
+  p_emit: 0.7
+  train_sizes: [50, 250, 1000]
+  test_size: 2000
+  num_epochs: 150
+  batch_size: 32
+  lr: 0.01
+  weight_decay: 0.01
+  eval_every: 1
+  patience: 15
+  min_delta: 0.001
+  seed: 42
+
+Bayes Optimal Hamming: 0.2112
+
+N_train    Method             Hamming      Time(s)      Epochs     Stopped 
+----------------------------------------------------------------------
+50         Viterbi            0.2803       7.8          35         Yes     
+50         LP Relaxation      0.2803       792.8        35         Yes     
+
+250        Viterbi            0.2836       3.2          4          Yes     
+250        LP Relaxation      0.2840       292.3        4          Yes     
+
+1000       Viterbi            0.2142       12.0         25         Yes     
+1000       LP Relaxation      0.2141       773.5        29         Yes     
+
