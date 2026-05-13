@@ -293,7 +293,7 @@ def plot_mnist_pool_usage_sudoku(
     box_data = [usage[d] for d in digits]
 
     fig, ax = plt.subplots(figsize=(_THESIS_WIDTH, 3.5))
-    bp = ax.boxplot(
+    ax.boxplot(  
         box_data, tick_labels=digits, showmeans=True, meanline=True,
         patch_artist=True,
         boxprops=dict(facecolor=_BAR_COLOR, alpha=0.85, edgecolor="black"),
