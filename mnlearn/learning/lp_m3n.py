@@ -18,20 +18,9 @@ where U decomposes into cheap local argmax operations:
 
 Delta(y_v, k) = (1/T) * [[y_v != k]]   (normalised Hamming, per node).
 
-The 1/T factor keeps the augmented term in [0, 1] regardless of T and
-prevents the "unary-shortcut" pathology described in §2.4 of the
-thesis: without it, a confident unary backbone can close the margin
-by inflating its outputs by O(T) instead of learning pairwise
-structure.
-
 Each training example i carries its own auxiliary variables phi_i of shape
 [2, E, K].  These are jointly optimised with the model parameters w by
 gradient descent, making training tractable on general (non-tree) graphs.
-
-Gradient computation:
-    - The max operations are piecewise linear; autograd computes subgradients
-      (indicator at the argmax), which is exactly the subgradient formula
-      given in the paper.
 """
 
 import torch
@@ -59,8 +48,7 @@ def lp_m3n_loss(unary, pairwise, y_true, edges, phi):
 
     # --- Hamming loss augmentation ---
     # Δ_v(k) = 1/T if k != y_true[v] else 0. The /T normalisation makes the total Hamming task
-    # loss live in [0, 1] regardless of T, so the augmentation does
-    # not dominate the score in the surrogate.
+    # loss live in [0, 1]
     hamming_aug = torch.ones(T, K, device=unary.device, dtype=unary.dtype) / T
     hamming_aug.scatter_(1, y_true.unsqueeze(1), 0.0)
     aug_unary = unary + hamming_aug  # [T, K]

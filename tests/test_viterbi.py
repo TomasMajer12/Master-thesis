@@ -1,11 +1,8 @@
 """Tests for Viterbi inference."""
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
 import torch
-from src.inference import viterbi_decode, loss_augmented_viterbi
+
+from mnlearn.inference import viterbi_decode, loss_augmented_viterbi
 
 
 def brute_force_decode(unary, pairwise):
