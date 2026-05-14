@@ -15,7 +15,7 @@ results directory described in :mod:`mnlearn.learning.runner`.
 
 from .builders import build_inference, build_scheduler
 from .classifier_trainer import ClassifierTrainer
-from .evaluation import chunked_evaluate, hamming_distance, hamming_loss, zero_one_loss
+from .evaluation import hamming_distance, hamming_loss, zero_one_loss
 from .lp_m3n import lp_m3n_loss
 from .runner import train
 from .structured_svm import structured_hinge_loss
@@ -29,7 +29,6 @@ __all__ = [
     "hamming_loss",
     "hamming_distance",
     "zero_one_loss",
-    "chunked_evaluate",
     # Unified structured trainer
     "Trainer",
     "EarlyStopping",
