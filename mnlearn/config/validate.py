@@ -145,8 +145,6 @@ def _check_data(cfg: Config, errors: list[str]) -> None:
         errors.append(f"data.task={d.task!r} not in {sorted(_DATA_TASKS)}")
     if d.mode not in _DATA_MODES:
         errors.append(f"data.mode={d.mode!r} not in {sorted(_DATA_MODES)}")
-    if d.mode == "visual" and "mnist" not in d.paths:
-        errors.append("data.paths.mnist is required when data.mode='visual'")
     if d.task == "sudoku" and "benchmark" not in d.paths:
         errors.append("data.paths.benchmark is required when data.task='sudoku'")
     for fname, val in [("train_size", d.train_size), ("val_size", d.val_size),
@@ -303,8 +301,6 @@ def _check_baseline_data(cfg: BaselineConfig, errors: list[str]) -> None:
             f"data.mode={d.mode!r}: baseline only supports mode='visual' "
             f"(OCR is a digit-image classifier)"
         )
-    if "mnist" not in d.paths:
-        errors.append("data.paths.mnist is required for the visual baseline")
     if "benchmark" not in d.paths:
         errors.append("data.paths.benchmark is required for the visual baseline")
     for fname, val in [("train_size", d.train_size), ("val_size", d.val_size),

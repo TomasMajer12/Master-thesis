@@ -62,9 +62,10 @@ def train_baseline(
     # so we go through ``load_sudoku_benchmark`` directly here.
     base = Path.cwd()
     bench_path = (base / cfg.data.paths["benchmark"]).resolve()
-    mnist_root = (base / cfg.data.paths["mnist"]).resolve()
+    mnist_key  = cfg.data.paths.get("mnist")
+    mnist_root = str((base / mnist_key).resolve()) if mnist_key else None
     bench = load_sudoku_benchmark(
-        str(bench_path), mode="visual", mnist_root=str(mnist_root),
+        str(bench_path), mode="visual", mnist_root=mnist_root,
     )
 
     train_X, train_quiz, _          = _materialize_visual_split(bench["train"], cfg.data.train_size)

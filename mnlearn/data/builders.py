@@ -52,9 +52,10 @@ def _build_sudoku(cfg: DataCfg, base: Path) -> dict[str, tuple]:
     bench_path = (base / cfg.paths["benchmark"]).resolve()
 
     if cfg.mode == "visual":
-        mnist_root = (base / cfg.paths["mnist"]).resolve()
+        mnist_key  = cfg.paths.get("mnist")
+        mnist_root = str((base / mnist_key).resolve()) if mnist_key else None
         data = load_sudoku_benchmark(
-            str(bench_path), mode="visual", mnist_root=str(mnist_root),
+            str(bench_path), mode="visual", mnist_root=mnist_root,
         )
         sizes = (cfg.train_size, cfg.val_size, cfg.test_size)
         return {
@@ -83,9 +84,10 @@ def _build_hmc(cfg: DataCfg, base: Path) -> dict[str, tuple]:
     bench_path = (base / cfg.paths["benchmark"]).resolve()
 
     if cfg.mode == "visual":
-        mnist_root = (base / cfg.paths["mnist"]).resolve()
+        mnist_key  = cfg.paths.get("mnist")
+        mnist_root = str((base / mnist_key).resolve()) if mnist_key else None
         data = load_hmc_benchmark(
-            str(bench_path), mode="visual", mnist_root=str(mnist_root),
+            str(bench_path), mode="visual", mnist_root=mnist_root,
         )
         seq_len = data["config"]["seq_len"]
         sizes = (cfg.train_size, cfg.val_size, cfg.test_size)
