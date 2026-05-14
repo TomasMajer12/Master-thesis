@@ -1,0 +1,16 @@
+{
+  "task": "sudoku",
+  "modes": [
+    "symbolic",
+    "visual"
+  ],
+  "csv_path": "C:\\Users\\tomas.majer\\.cache\\kagglehub\\datasets\\bryanpark\\sudoku\\versions\\3\\sudoku.csv",
+  "num_puzzles": 50000,
+  "train_size": 30000,
+  "val_size": 10000,
+  "test_size": 10000,
+  "puzzle_seed": 42,
+  "mnist_seed": 200,
+  "num_nodes": 81,
+  "num_labels": 9
+}
