@@ -10,8 +10,11 @@ where:
     Delta(y, y_true)  = task loss (e.g. Hamming distance)
 
 The inner maximization ("loss-augmented inference") finds the most-violating
-labeling y*. This is solved by the inference module (Viterbi for chains,
-LP relaxation for general graphs).
+labeling y*. In this codebase the inner max is solved by Viterbi (chain
+graphs only); the config validator restricts this loss to
+``loss=m3n_hinge`` paired with ``inference.train=viterbi``. The
+LP-relaxed variant for general graphs is a separate loss function
+(:func:`mnlearn.learning.lp_m3n_loss`) with its own training contract.
 """
 
 import torch
@@ -33,7 +36,10 @@ def structured_hinge_loss(model, unary, y_true, edges, inference_fn):
     Returns:
         loss: scalar — mean structured hinge loss over the batch
     """
-    batch, T, K = unary.shape
+    assert unary.dim() == 3, (
+        f"structured_hinge_loss expects unary of shape [B, T, K]; "
+        f"got {tuple(unary.shape)}"
+    )
 
     # Step 1: Loss-augmented inference (no gradients needed)
     #   Find y* = argmax_y [ F(y|x) + Delta(y, y_true) ]
