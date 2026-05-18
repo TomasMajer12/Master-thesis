@@ -1,0 +1,34 @@
+# OCR digit classifier head for the two-stage Sudoku baseline.
+#
+# Convolutional stack matching configs/architectures/sudoku_lenet5.yaml,
+# so the M3N method and the OCR baseline share an identical feature
+# extractor (clean comparison in the experiments chapter, Section 4.5).
+# Two differences from the M3N config:
+#
+#   - No terminal Softmax. ClassifierTrainer uses nn.CrossEntropyLoss
+#     which applies log-softmax internally; a tail Softmax would
+#     double-apply it and weaken gradients. The validator rejects
+#     softmax-tailed architectures for this baseline.
+#
+#   - No `graph` / `pairwise` blocks. The OCR head is non-structured
+#     (per-cell prediction, no Markov network).
+#
+# Per-image input is [1, 28, 28]; output is [num_classes] raw logits.
+
+num_classes: 9
+
+backbone:
+  type: config
+  layers:
+    - {type: conv2d, in_channels: 1, out_channels: 6, kernel_size: 5, padding: 2}    # 6  x 28 x 28
+    - {type: relu}
+    - {type: maxpool2d, kernel_size: 2}                                              # 6  x 14 x 14
+    - {type: conv2d, in_channels: 6, out_channels: 16, kernel_size: 5}               # 16 x 10 x 10
+    - {type: relu}
+    - {type: maxpool2d, kernel_size: 2}                                              # 16 x 5  x 5
+    - {type: conv2d, in_channels: 16, out_channels: 120, kernel_size: 5}             # 120 x 1 x 1
+    - {type: relu}
+    - {type: flatten, start_dim: 1}                                                  # 120
+    - {type: linear, in_features: 120, out_features: 84}
+    - {type: relu}
+    - {type: linear, in_features: 84, out_features: 9}                               # MUST equal num_classes

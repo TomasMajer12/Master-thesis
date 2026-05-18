@@ -1,0 +1,26 @@
+# Linear-only baseline for chain-structured tasks (§4.2.1, "linear baseline").
+#
+# Per-cell input is the K-dim one-hot encoding of the symbolic
+# observation. The single Linear layer maps it to K class scores.
+# Combined with chain-graph M3N this is the simplest possible
+# structured predictor — useful as a sanity-check baseline that the
+# full LeNet-5 + LP-M3N stack ought to beat on visual HMC and that
+# structured-hinge ought to match on symbolic HMC.
+#
+# K = 10 by default (matches the benchmark in benchmarks/hmc/). Inline
+# this architecture into a different experiment YAML if you need a
+# different K.
+
+num_classes: 10
+
+backbone:
+  type: config
+  layers:
+    - {type: linear, in_features: 10, out_features: 10}     # MUST equal num_classes
+
+graph:
+  type: chain
+  seq_len: 30
+
+pairwise:
+  init_scale: 0.1

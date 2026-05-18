@@ -1,0 +1,54 @@
+# LP-M3N on visual HMC chain (§5.2.2).
+#
+# Method side of the visual tightness validation. Same data and
+# architecture as m3n_hinge_hmc_visual.yaml. weight_decay_phi defaults
+# to 0; the v1 lambda sweep varies only weight_decay (the M3N gauge-
+# pinning regularizer). If the φ-norm sanity plot diverges, v2 turns on
+# weight_decay_phi.
+
+experiment:
+  name:   hmc_vis_lp_m3n
+  seed:   42
+  device: auto
+
+architecture: ../architectures/hmc_lenet5.yaml
+
+data:
+  task: hmc
+  mode: visual
+  paths:
+    benchmark: benchmarks/hmc
+    mnist:     mnist_data
+  train_size: 3000
+  val_size:   3000
+  test_size:  10000
+  batch_size: 32
+
+training:
+  loss: lp_m3n
+  inference:
+    train: lp
+    eval:  viterbi
+  optimizer:
+    type:             adam
+    lr:               0.001
+    weight_decay:     0.001
+    weight_decay_phi: 0.0
+    phi_init_std:     0.0
+    lr_phi:           0.01
+  num_epochs: 200
+  scheduler:
+    type:   lambda
+    params: {offset: 100}
+  eval_every: 3             # 200/3 ≈ 67 history points — smooth curves, ~3× cheaper than per-epoch
+  early_stopping:
+    monitor:   val_metrics.hamming
+    patience:  60          # 20 evals × eval_every=3 = 60 epochs of no improvement
+    min_delta: 0.001
+
+logging:
+  verbose: true
+  print_metrics:
+    - train_loss
+    - val_metrics.hamming
+    - diagnostics.phi_norm

@@ -1,0 +1,52 @@
+# LP-M3N on symbolic HMC chain.
+#
+# The method side of the tightness validation. Same data and same
+# architecture as m3n_hinge_hmc_symbolic.yaml; only the training path
+# differs (LP-relaxed M3N with per-example phi instead of structured
+# hinge with Viterbi loss-augmented inference).
+
+experiment:
+  name:   hmc_sym_lp_m3n
+  seed:   42
+  device: auto
+
+architecture: ../architectures/linear_chain.yaml
+
+data:
+  task: hmc
+  mode: symbolic
+  paths:
+    benchmark: benchmarks/hmc
+  train_size: 3000
+  val_size:   3000
+  test_size:  10000
+  batch_size: 64
+
+training:
+  loss: lp_m3n
+  inference:
+    train: lp
+    eval:  viterbi
+  optimizer:
+    type:             adam
+    lr:               0.01
+    weight_decay:     0.001
+    weight_decay_phi: 0.0
+    phi_init_std:     0.0
+
+  num_epochs: 50
+  scheduler:
+    type:   lambda
+    params: {offset: 100}
+  eval_every: 1
+  early_stopping:
+    monitor:   val_metrics.hamming
+    patience:  50
+    min_delta: 0.001
+
+logging:
+  verbose: false
+  print_metrics:
+    - train_loss
+    - val_metrics.hamming
+    - diagnostics.phi_norm

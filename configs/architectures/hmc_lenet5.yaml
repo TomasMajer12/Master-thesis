@@ -1,0 +1,37 @@
+# LeNet5 backbone for visual HMC chain.
+#
+# Same convolutional stack as configs/architectures/sudoku_lenet5.yaml but
+# with a 10-class head (HMC's K = 10) and a chain graph instead of the
+# Sudoku constraint grid. Used for §5.2.2 (Visual HMC LP-M3N) and the
+# tightness-validation experiments where structured hinge and LP-M3N
+# should converge to the same numbers on a chain.
+#
+# Per-cell input is [1, 28, 28]; chain length is 30 (matches the
+# benchmark in benchmarks/hmc/). Edit graph.seq_len if you build a
+# benchmark with a different T.
+
+num_classes: 10
+
+backbone:
+  type: config
+  layers:
+    - {type: conv2d, in_channels: 1, out_channels: 6, kernel_size: 5, padding: 2}    # 6  x 28 x 28
+    - {type: relu}
+    - {type: maxpool2d, kernel_size: 2}                                              # 6  x 14 x 14
+    - {type: conv2d, in_channels: 6, out_channels: 16, kernel_size: 5}               # 16 x 10 x 10
+    - {type: relu}
+    - {type: maxpool2d, kernel_size: 2}                                              # 16 x 5  x 5
+    - {type: conv2d, in_channels: 16, out_channels: 120, kernel_size: 5}             # 120 x 1 x 1
+    - {type: relu}
+    - {type: flatten, start_dim: 1}                                                  # 120
+    - {type: linear, in_features: 120, out_features: 84}
+    - {type: relu}
+    - {type: linear, in_features: 84, out_features: 10}                              # MUST equal num_classes
+    - {type: Softmax, dim: 1}
+
+graph:
+  type: chain
+  seq_len: 30
+
+pairwise:
+  init_scale: 0.1

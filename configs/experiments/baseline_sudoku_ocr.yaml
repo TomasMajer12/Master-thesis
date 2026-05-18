@@ -1,0 +1,55 @@
+# Two-stage OCR baseline — main run at N=1000 visual Sudoku puzzles.
+#
+# The OCR digit classifier (LeNet-5 backbone, no terminal softmax) is
+# trained with cross-entropy on clue cells (~30/puzzle * 1000 puzzles =
+# ~30k training images). At test time the OCR predictions on clue cells
+# are fed into the hard-coded constraint-propagation + backtracking
+# solver. End-to-end metric: 0/1 puzzle error vs. ground-truth solution.
+#
+# Reported metrics in results.json:
+#   zero_one            primary; counts solver failures as wrong.
+#   solver_feasibility  fraction of puzzles where the solver returned a grid.
+#   ocr_clue_error      fraction of clue cells the OCR misclassified.
+#
+# Hyperparameters: Adam(lr=1e-3, weight_decay=1e-4) + lambda LR schedule
+# (offset=100), early stop on val_error with patience=10. Roughly
+# matches the optimiser settings used by the LeNet-5 + LP-M3N path so
+# the comparison is "same backbone, different decision layer".
+
+experiment:
+  name:   baseline_sudoku_ocr
+  seed:   42
+  device: auto
+
+architecture: ../architectures/ocr_lenet5.yaml
+
+data:
+  task: sudoku
+  mode: visual
+  paths:
+    benchmark: benchmarks/sudoku
+    mnist:     mnist_data
+  train_size: 1000              # overridden per run by the notebook
+  val_size:   10000
+  test_size:  10000             # matches notebook 05 for headline comparison
+  batch_size: 64
+
+training:
+  loss: cross_entropy
+  optimizer:
+    type:         adam
+    lr:           0.001
+    weight_decay: 0.0001
+  num_epochs: 200
+  scheduler:
+    type: lambda
+    params:
+      offset: 100
+  eval_every: 2
+  early_stopping:
+    monitor:   val_error
+    patience:  15
+    min_delta: 0.000
+
+logging:
+  verbose: true

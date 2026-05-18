@@ -1,0 +1,78 @@
+# LP-M3N on visual Sudoku — main §5.3 experiment (notebook 05).
+#
+# This is the headline configuration for the §5.3 results chapter. The
+# notebook 05 runs three phases on top of this YAML:
+#
+#   A. λ sweep at N=100 (§5.3.2) — overrides training.optimizer.weight_decay.
+#   B. Best-λ long run at N=100, 5 seeds (§5.3.3).
+#   C. Learning curve at chosen λ over N ∈ {100, 1000, 2000, 5000},
+#      3 seeds (§5.3.4).
+#
+# Hyperparameters that DO NOT change between phases are baked in here:
+#   - lr_phi = 0.01 (confirmed by notebook 02 ablation; closes the
+#     joint-gradient-descent tightness gap on LeNet-5 backbones).
+#   - softmax-tailed architecture (confirmed best by §5.5.2 ablation;
+#     no_softmax variant degrades test 0/1 by ~6 percentage points on
+#     visual Sudoku).
+#   - min_delta = 0.0001 (fine enough to keep training alive when val
+#     0/1 is improving in single-puzzle steps; v1's 0.001 stopped too
+#     early when chasing near-100%).
+#   - eval_every = 5 (BP eval on 500 val puzzles is the dominant cost
+#     per epoch on the cyclic graph; 5× cheaper than per-epoch eval).
+
+experiment:
+  name:   vis_sudoku_lp_m3n
+  seed:   42
+  device: auto
+
+architecture: ../architectures/sudoku_lenet5.yaml
+
+data:
+  task: sudoku
+  mode: visual
+  paths:
+    benchmark: benchmarks/sudoku
+    mnist:     mnist_data
+  train_size: 1000              # overridden per run by the notebook
+  val_size:   10000
+  test_size:  10000
+  batch_size: 32
+
+training:
+  loss: lp_m3n
+  inference:
+    train: lp
+    eval:  bp                   # cyclic graph
+    params: {bp_iters: 50}      # canonical default; lower (e.g. 15-30) if eval cost matters
+  optimizer:
+    type:             adam
+    lr:               0.001     # model lr (matches notebook 02)
+    weight_decay:     0.001     # default; overridden by phase A λ sweep
+    weight_decay_phi: 0.0
+    phi_init_std:     0.0
+    lr_phi:           0.01      # 10× lr_model — verified necessary
+    lr_pairwise:      0.01      # 10× lr_model — fixes CNN-vs-W asymmetry at low N
+                                # (see TODO.md "Separate lr_pairwise" entry).
+                                # Without it: hamming stalls at ~0.35 at N=500.
+  num_epochs: 3000
+  scheduler:
+    type:   lambda
+    params: {offset: 500}       # lr at epoch 3000 ≈ 14% of initial; slow-converging
+                                # large-N runs need late-training LR juice.
+  eval_every: 10                # BP eval on 10k val puzzles is expensive — 2× cheaper
+                                # than eval_every=5 with no real loss of curve resolution.
+  early_stopping:
+    monitor:   val_metrics.zero_one   # 0/1 is a step function on Sudoku and stays
+                                     # at 1.0 until the phase transition — patience
+                                     # fires before the model gets a chance. Hamming
+                                     # is smooth and reflects per-cell progress.
+    patience:  25                    # 25 evals × eval_every=10 = 250 epochs grace
+    min_delta: 0.0                   # any strict hamming improvement counts
+
+logging:
+  verbose: true
+  print_metrics:
+    - train_loss
+    - val_metrics.hamming
+    - val_metrics.zero_one
+    - diagnostics.phi_norm
