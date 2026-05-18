@@ -1,0 +1,95 @@
+\section{Baselines}
+\label{sec:method-baseline}
+
+Two baselines are used in this thesis. The two-stage OCR +
+solver baseline
+(Section~\ref{subsec:method-baseline-two-stage}) is the
+non-joint alternative for visual Sudoku, against which the
+end-to-end M\textsuperscript{3}N predictor is compared in
+Chapter~\ref{chap:experiments}. The Forward-Backward marginal
+classifier (Section~\ref{subsec:method-baseline-hmc-oracle}) is
+the Bayes-optimal Hamming-loss decoder for symbolic HMC, used
+as an oracle floor in the chain tightness experiments.
+
+\subsection{Two-stage OCR + solver}
+\label{subsec:method-baseline-two-stage}
+
+The two-stage baseline is a deliberately simple alternative to
+the joint M\textsuperscript{3}N predictor. It separates
+perception from reasoning: a per-cell digit classifier first
+reads the visual clues, and a hard-coded Sudoku solver then
+completes the grid from those predicted clues. The baseline
+serves two purposes in this thesis. First, it isolates the role
+of the joint structured decision layer; any improvement of the
+M\textsuperscript{3}N predictor over the two-stage pipeline is
+attributable to end-to-end training. Second, the OCR component
+uses the same backbone as the M\textsuperscript{3}N predictor's
+unary feature extractor, so the comparison reduces to ``same
+backbone, different decision layer''.
+
+\paragraph{OCR digit classifier.}
+A per-cell digit classifier maps each $28 \times 28$
+MNIST-style image to a $K$-dimensional vector of class scores;
+the predicted digit is the index of the maximum score. Only
+clue cells of the visual Sudoku training split are fed to the
+classifier --- blank cells are the all-zeros image
+(Section~\ref{subsec:sudoku-visual}) and are dropped entirely.
+With $N_{\mathrm{train}}$ training puzzles the classifier
+therefore sees roughly $36\, N_{\mathrm{train}}$ clue images
+per epoch. The classifier is trained with the cross-entropy
+loss on 0-indexed digit labels, using the Adam optimizer with
+the same hyperbolic learning-rate schedule as the structured
+path (Section~\ref{subsec:method-training-optimizer}). All
+hyperparameters live in the experiment YAML
+(Section~\ref{sec:method-implementation}).
+
+\paragraph{Hard-coded Sudoku solver.}
+The solver is a standard depth-first backtracking search
+augmented by naked-singles constraint propagation and the
+Minimum Remaining Values (MRV) variable-ordering heuristic,
+following Norvig~\cite{norvig2006sudoku} and the textbook
+treatment of constraint-satisfaction problems
+in~\cite{russell2020aima}. It either returns a complete
+$9 \times 9$ grid satisfying all constraints, or signals
+infeasibility when the predicted clues contradict each other.
+
+\paragraph{Pipeline and metrics.}
+At evaluation time the OCR classifier predicts a digit at
+every clue cell; the predicted clues form a corrupted quiz,
+which is passed to the solver; the solver's output is compared
+cell-wise to the ground-truth solution. Three complementary
+metrics are reported on every test split:
+\begin{itemize}
+    \item \emph{$0/1$ error.} The fraction of test puzzles
+    whose final grid does not exactly match the ground-truth
+    solution. Solver failures count as wrong. This is the
+    headline metric for the two-stage system and is directly
+    comparable to the M\textsuperscript{3}N predictor's $0/1$
+    error on the same test split.
+    \item \emph{Solver feasibility.} The fraction of puzzles
+    where the solver returned some grid (even an incorrect
+    one). Distinguishes ``OCR was confidently wrong''
+    (feasible but incorrect) from ``OCR's clues are
+    inconsistent with any Sudoku'' (infeasible).
+    \item \emph{OCR clue error.} The fraction of clue cells
+    where the OCR's argmax disagrees with the ground-truth
+    clue digit. A pure component-level diagnostic of the OCR
+    classifier, isolated from the solver.
+\end{itemize}
+
+\subsection{HMC oracle: Forward-Backward}
+\label{subsec:method-baseline-hmc-oracle}
+
+The HMC tightness experiments use the Forward-Backward marginal
+classifier as the oracle floor. Given the known HMM parameters,
+it computes per-cell posteriors $P(y_t \mid X)$ via the classic
+Forward-Backward algorithm and predicts
+$y_t = \argmax_y P(y_t = y \mid X)$, which minimizes expected
+Hamming loss. No classifier with access to the same observations
+can beat it; the structured-hinge and LP-M3N methods are
+expected to approach but not surpass it. The Forward-Backward
+decoder differs from Viterbi (used by structured-hinge for
+loss-augmented inference at training time) in that it minimizes
+Hamming rather than $0/1$ loss. The baseline is symbolic-only
+by design; a visual oracle would require a learned per-cell
+image classifier on top, which is not provided here.

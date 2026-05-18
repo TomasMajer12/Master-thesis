@@ -1,0 +1,157 @@
+\section{MAP Inference}
+\label{sec:map-inference}
+
+Given a Markov Network with score function $f(x, y)$ of the form
+\eqref{eq:mn-score}, evaluating the predictor
+\eqref{eq:map-prediction} requires solving the \emph{MAP inference}
+problem
+\begin{equation}
+    \hat{y}(x) \;=\; \argmax_{y \in \mathcal{Y}^{N}} f(x, y).
+    \label{eq:map-restated}
+\end{equation}
+Problem~\eqref{eq:map-restated} is NP-hard for general graphs; see,
+e.g., \cite{Shimony1994}. Its tractability therefore depends on the
+structure of $G$. Two cases are relevant for this thesis: on a linear
+chain, exact inference is obtained in polynomial time by dynamic
+programming; on the cyclic Sudoku graph, exact inference is
+intractable and approximate methods are required.
+
+\subsection{The Viterbi algorithm}
+\label{subsec:viterbi}
+
+For the linear-chain MN of Eq.~\eqref{eq:chain-score}, the maximum of
+$f(x, y)$ is computed in $O(T \cdot K^2)$ time by the Viterbi
+algorithm~\cite{Viterbi1967, Forney1973}, a dynamic-programming
+procedure that maintains, for each position $t$ and each state
+$j \in \mathcal{Y}$, the score of the best partial labeling that ends
+in state $j$ at position $t$:
+\begin{align}
+    \delta_0(j) &\;=\; f_0(x, j),
+    \label{eq:viterbi-init} \\
+    \delta_t(j) &\;=\; f_t(x, j)
+    \;+\; \max_{i \in \mathcal{Y}}\!\bigl[
+        \delta_{t-1}(i) + f_{t-1, t}(i, j)
+    \bigr], \quad t = 1, \ldots, T-1.
+    \label{eq:viterbi-recursion}
+\end{align}
+Back-pointers record, at each step, which predecessor $i$ attained
+the maximum in Eq.~\eqref{eq:viterbi-recursion}:
+\begin{equation}
+    b_t(j) \;=\; \argmax_{i \in \mathcal{Y}}\!\bigl[
+        \delta_{t-1}(i) + f_{t-1, t}(i, j)
+    \bigr].
+    \label{eq:viterbi-backpointer}
+\end{equation}
+The terminal state of the optimal labeling is
+$\hat{y}_{T-1} = \argmax_j \delta_{T-1}(j)$, and the remaining
+labels are recovered by following the back-pointers:
+$\hat{y}_{t-1} = b_t(\hat{y}_t)$ for $t = T-1, \ldots, 1$.
+Correctness of Eqs.~\eqref{eq:viterbi-init}--\eqref{eq:viterbi-backpointer}
+follows from the optimal-substructure property of the chain: any
+prefix of an optimal labeling is optimal among prefixes that end in
+the same state. The chain structure ensures that the score
+contribution of positions $0, \ldots, t$ depends on positions
+$t+1, \ldots, T-1$ only through the choice of $y_t$, so once
+$\delta_t(j)$ records the best score ending in state $j$ at
+position $t$, the extension to position $t+1$ depends only on
+$\delta_t(\cdot)$.
+
+\subsection{The LP relaxation}
+\label{subsec:lp-relaxation}
+
+On a graph with cycles --- such as the Sudoku graph --- exact MAP
+inference is NP-hard and the dynamic-programming approach of
+Section~\ref{subsec:viterbi} no longer applies. A standard
+workaround is to \emph{relax} the discrete label assignment to a
+continuous one and solve the resulting linear
+program~\cite{Werner2007}.
+
+In this thesis the LP relaxation plays a learning role rather than
+an inference role: it provides the theoretical foundation for the
+LP-relaxed learning loss of Section~\ref{sec:learning-mn} (LP-M3N),
+and the per-example dual variables it introduces are jointly
+optimized with the model parameters at training time. MAP inference
+at evaluation time on cyclic graphs uses a separate approximate
+decoder, presented in Section~\ref{subsec:belief-propagation}.
+Algorithms that solve the LP exactly --- such as max-sum diffusion
+--- exist but are not used here.
+
+Each integer assignment $y_v = a$ is replaced by a continuous variable
+$\mu_v(a) \in [0, 1]$ --- a \emph{relaxed indicator} of label $a$ at
+node $v$ --- and each edge assignment $(y_v, y_{v'}) = (a, b)$ by
+$\mu_{vv'}(a, b) \in [0, 1]$. Natural consistency conditions are
+imposed: the indicators at each node sum to one, and the node and
+edge indicators marginalize consistently,
+\begin{equation}
+    \sum_{a \in \mathcal{Y}} \mu_v(a) = 1, \qquad
+    \sum_{b \in \mathcal{Y}} \mu_{vv'}(a, b) = \mu_v(a), \qquad
+    \sum_{a \in \mathcal{Y}} \mu_{vv'}(a, b) = \mu_{v'}(b).
+\end{equation}
+Subject to these constraints and $\mu \geq 0$, the LP maximizes
+\begin{equation}
+    \sum_{v \in V} \sum_{a \in \mathcal{Y}} f_v(x, a)\, \mu_v(a)
+    \;+\; \sum_{\{v, v'\} \in E} \sum_{a, b \in \mathcal{Y}}
+    f_{vv'}(a, b)\, \mu_{vv'}(a, b).
+    \label{eq:lp-relaxation}
+\end{equation}
+Since every integer assignment is a feasible $\mu$, the LP optimum
+upper-bounds the MAP objective.
+
+When the optimal $\mu$ happens to be integer-valued it corresponds
+directly to a labeling $y$, which is then guaranteed to be the MAP
+solution. This is always the case on chains and trees, where the LP
+and Viterbi optima coincide --- a property that underpins the
+tightness check used in Chapter~\ref{chap:experiments} to validate
+the LP-relaxed \emph{learning} loss of
+Section~\ref{sec:learning-mn}. On cyclic graphs the LP may instead
+return a \emph{fractional} $\mu$ whose objective strictly exceeds
+the MAP optimum, and in such cases a discrete labeling could in
+principle be recovered by rounding,
+\begin{equation}
+    \hat{y}_v \;=\; \argmax_{a \in \mathcal{Y}} \mu_v(a).
+    \label{eq:lp-rounding}
+\end{equation}
+The present thesis does not solve the LP at evaluation time,
+however; the relaxation enters only through the LP-relaxed
+learning loss derived in Section~\ref{sec:learning-mn}, and the
+inference algorithm used at evaluation time is the Belief
+Propagation decoder developed next.
+
+\subsection{Loopy Belief Propagation}
+\label{subsec:belief-propagation}
+
+The decoder used at evaluation time in this thesis on cyclic graphs
+is loopy max-sum Belief Propagation (BP). BP iteratively passes
+messages between neighbouring nodes; for each directed edge
+$(u, v)$ with $u, v \in V$, the message from $u$ to $v$ at
+iteration $\tau$ is
+\begin{equation}
+    m^{(\tau)}_{u \to v}(b) \;=\;
+    \max_{a \in \mathcal{Y}}\!\Biggl[
+        f_u(x, a) + f_{uv}(a, b)
+        + \!\!\!\sum_{u' \in \mathcal{N}(u) \setminus \{v\}}\!\!\!
+        m^{(\tau-1)}_{u' \to u}(a)
+    \Biggr],
+    \label{eq:bp-update}
+\end{equation}
+i.e.\ the best score that $u$ can offer $v$ for each label $b$ at
+$v$, given the unary at $u$, the pairwise potential, and all
+incoming messages at $u$ except the one from $v$. After a fixed
+number of iterations, the per-node \emph{belief}
+\begin{equation}
+    \beta_v(a) \;=\; f_v(x, a)
+    \;+\!\!\!\sum_{u \in \mathcal{N}(v)}\!\!\! m_{u \to v}(a),
+    \label{eq:bp-belief}
+\end{equation}
+is read off and the predicted label at node $v$ is
+$\hat{y}_v = \argmax_{a \in \mathcal{Y}} \beta_v(a)$.
+
+On tree-structured graphs BP coincides with Viterbi after one
+forward pass and is therefore exact. On graphs with cycles ---
+``loopy'' BP --- it is no longer guaranteed to converge or to
+recover the MAP configuration, but it remains a strong
+approximation in practice on the sparse constraint graphs that
+arise in Sudoku. BP was chosen over exact LP solvers (such as
+max-sum diffusion of Section~\ref{subsec:lp-relaxation}) because
+it has a fixed per-example cost and batches naturally over many
+test examples on GPU.

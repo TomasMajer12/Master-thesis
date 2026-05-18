@@ -1,0 +1,225 @@
+\section{Learning Markov Networks}
+\label{sec:learning-mn}
+
+Learning consists in choosing the parameter vector $w$ of the Markov
+Network from a training set
+$\mathcal{D} = \{(x^i, y^i)\}_{i=1}^{m} \subset \mathcal{X} \times
+\mathcal{Y}^{N}$. The approach adopted in this thesis is the
+\emph{max-margin} one due to Taskar et al.\ and Tsochantaridis et
+al.~\cite{Taskar2004, Tsochantaridis2005}: $w$ is chosen so that, for
+every training pair, the score of the ground-truth labeling exceeds
+the score of every wrong labeling by a margin proportional to how
+wrong it is. Because exact max-margin training is intractable on
+cyclic graphs, the training loss is further replaced by a tractable
+LP-relaxed surrogate following Franc \& Yermakov~\cite{franc2021}.
+
+\subsection{Max-margin formulation}
+\label{subsec:max-margin}
+
+Assuming the unary and pairwise potentials of
+Section~\ref{sec:markov-networks} are linear in the parameters
+$w \in \mathbb{R}^{d}$, the MAP predictor of
+Eq.~\eqref{eq:map-prediction} reduces to the linear classifier
+\begin{equation}
+    h(x; w) \;=\; \argmax_{y \in \mathcal{Y}^{N}}\,
+    \langle w, \psi(x, y) \rangle,
+    \label{eq:linear-classifier}
+\end{equation}
+with the joint feature map $\psi$ defined in
+Eq.~\eqref{eq:joint-feature}. Given a task-specific loss
+$\ell \colon \mathcal{Y}^{N} \times \mathcal{Y}^{N} \to \mathbb{R}_{+}$
+(the normalized Hamming loss of
+Section~\ref{subsec:loss-functions} in this thesis) and a
+regularization constant $\lambda \geq 0$, the
+\emph{max-margin Markov network} (M\textsuperscript{3}N) framework
+seeks $w$ such that for every training pair the score
+$\langle w, \psi(x, y)\rangle$ of the ground truth exceeds the
+score of every wrong labeling $y'$ by at least $\ell(y, y')$.
+Violations of this margin condition are penalized by the
+margin-rescaling loss $\Delta$, leading to the convex unconstrained
+problem
+\begin{equation}
+    w^{*} \;=\; \argmin_{w \in \mathbb{R}^d}\!\left[
+    \frac{\lambda}{2}\, \|w\|^{2}
+    \;+\; \frac{1}{m}\, \sum_{i=1}^{m}
+    \Delta(x^i, y^i, w)
+    \right],
+    \label{eq:m3n-objective}
+\end{equation}
+where
+\begin{equation}
+    \Delta(x, y, w) \;=\;
+    \max_{y' \in \mathcal{Y}^{N}}\!
+    \Bigl[
+        \ell(y, y') + \langle w, \psi(x, y') \rangle
+    \Bigr]
+    \;-\; \langle w, \psi(x, y) \rangle.
+    \label{eq:margin-rescaling}
+\end{equation}
+
+$\Delta$ is convex in $w$, as a maximum of affine functions minus
+an affine term, and upper-bounds the task loss
+$\ell\bigl(y, h(x; w)\bigr)$ achieved by the predictor of
+Eq.~\eqref{eq:linear-classifier}; the inner product
+$\langle w, \psi(x, y)\rangle$ is the joint score $f(x, y)$ of
+Eq.~\eqref{eq:linear-score}. Objective~\eqref{eq:m3n-objective} is
+therefore a convex relaxation of regularized empirical risk.
+
+The constant $\lambda$ trades off data fit against the regularizer
+$\|w\|^{2}$: a larger $\lambda$ shrinks $w$ toward the origin and
+biases the predictor toward simpler decision boundaries, reducing
+the risk of overfitting; a smaller $\lambda$ allows $w$ to fit the
+training data more aggressively. Its value is selected on a
+validation split.
+
+\subsection{Loss-augmented inference}
+
+Both evaluating the loss $\Delta(x, y, w)$ and computing a
+subgradient of $\Delta$ with respect to $w$ require solving the
+inner maximum in Eq.~\eqref{eq:margin-rescaling}, called the
+\emph{loss-augmented inference} problem
+\begin{equation}
+    y^{\mathrm{LA}}
+    \;=\; \argmax_{y' \in \mathcal{Y}^{N}}\!
+    \Bigl[\, \ell(y, y') + \langle w, \psi(x, y') \rangle \,\Bigr].
+    \label{eq:loss-augmented}
+\end{equation}
+The normalized Hamming loss is \emph{decomposable}, i.e.\ it
+factorizes over output components as
+$\ell(y, y') = \frac{1}{N}\sum_{v} \mathbb{I}[y_{v} \neq y'_{v}]$.
+The loss term therefore adds a position-wise bonus of $1/N$ to
+every label that disagrees with the ground truth, so
+Eq.~\eqref{eq:loss-augmented} reduces to MAP inference with
+suitably shifted unary potentials --- explicitly, $f_v(x, a)$ is
+replaced by $f_v(x, a) + \frac{1}{N}\mathbb{I}[a \neq y_v]$. The
+$1/N$ normalization keeps the total task loss in $[0, 1]$
+irrespective of $N$ and prevents the augmentation from dominating
+the score; without it, a sufficiently confident unary backbone can
+close the margin by inflating its outputs by $O(N)$ rather than by
+learning useful pairwise structure.
+
+On the linear chain, problem~\eqref{eq:loss-augmented} is an
+$O(T K^2)$ Viterbi call, and exact max-margin training of
+linear-chain MNs is therefore practical. On the Sudoku graph, in
+contrast, loss-augmented inference is NP-hard and a subgradient of
+$\Delta$ cannot be computed in polynomial time. This motivates the
+LP-relaxed surrogate developed next.
+
+\subsection{Exact training on chains via the structured hinge}
+\label{subsec:structured-hinge}
+
+On the linear chain, where loss-augmented inference is exactly
+solvable by Viterbi (Section~\ref{subsec:viterbi}), the
+M\textsuperscript{3}N objective~\eqref{eq:m3n-objective} can be
+optimized directly by stochastic subgradient descent on $\Delta$.
+Given a training pair $(x, y)$ and the current parameters $w$,
+the oracle returns the most-violating labeling $y^{\mathrm{LA}}$
+of Eq.~\eqref{eq:loss-augmented}, and a subgradient of $\Delta$
+at $w$ is
+\begin{equation}
+    \partial_w \Delta(x, y, w)
+    \;\ni\; \psi(x, y^{\mathrm{LA}}) - \psi(x, y).
+    \label{eq:hinge-subgradient}
+\end{equation}
+Adding the regularizer contribution $\lambda w$ gives the
+subgradient of the full objective~\eqref{eq:m3n-objective}, which
+is used to update the parameters via stochastic optimization.
+
+Unlike the LP-relaxed loss developed next, this training path
+introduces no auxiliary variables and carries no per-example
+state across epochs. In this thesis it is used on the chain
+benchmark, where it serves as the reference against which the
+LP-relaxed loss is validated for tightness in
+Chapter~\ref{chap:experiments}.
+
+\subsection{LP-relaxed margin loss (LP-M3N)}
+\label{subsec:lp-m3n}
+
+Following Franc \& Yermakov~\cite{franc2021}, replacing the max in
+Eq.~\eqref{eq:loss-augmented} by its LP relaxation
+(Section~\ref{subsec:lp-relaxation}) yields an upper bound
+$\Delta^{\mathrm{LP}} \geq \Delta$. By LP duality, the relaxed max
+admits a reparameterization in which the single global maximum is
+replaced by a sum of local maxima mediated by auxiliary variables.
+These variables are the duals of the marginal-consistency
+constraints of the LP and live on the edges of the graph: for each
+edge $\{v, v'\} \in E$ we introduce two vectors $\phi_{vv'},
+\phi_{v'v} \in \mathbb{R}^{K}$ --- one associated with each
+endpoint --- and let $\phi$ denote the full collection. Then
+\begin{equation}
+    \Delta^{\mathrm{LP}}(x, y, w) \;=\;
+    \min_{\phi}\, U(x, y, w, \phi) \;-\; \langle w, \psi(x, y) \rangle,
+    \label{eq:lp-m3n-loss}
+\end{equation}
+with
+\begin{equation}
+    \begin{split}
+    U(x, y, w, \phi) \;=\;
+    &\sum_{v \in V}\, \max_{a \in \mathcal{Y}}\!
+    \Biggl[\,
+        f_{v}(x, a) + \tfrac{1}{N}\,\mathbb{I}[a \neq y_{v}]
+        - \!\!\!\sum_{v' \in \mathcal{N}(v)}\!\!\!\phi_{vv'}(a)
+    \,\Biggr] \\
+    +\,
+    &\sum_{\{v, v'\} \in E}\, \max_{a, b \in \mathcal{Y}}\!
+    \Bigl[\,
+        f_{vv'}(a, b) + \phi_{vv'}(a) + \phi_{v'v}(b)
+    \,\Bigr].
+    \end{split}
+    \label{eq:lp-m3n-U}
+\end{equation}
+For a fixed $\phi$, evaluating $U$ costs
+$O(|V| K + |E| K^{2})$: each node and edge term is an
+independent local arg-max. No LP solver is invoked.
+
+The inner minimum over $\phi$ in Eq.~\eqref{eq:lp-m3n-loss} is not
+solved exactly. Instead, the minimization is folded into the
+overall training objective: each training example $i$ carries its
+own auxiliary variables $\phi^{i}$, and the per-example duals are
+collected into $\phi = (\phi^1, \ldots, \phi^m)$ and optimized
+jointly with the model parameters $w$:
+\begin{equation}
+    (w^{*}, \phi^{*}) \;=\;
+    \argmin_{w,\, \phi}\!\left[
+    \frac{\lambda}{2}\, \|w\|^{2}
+    \;+\; \frac{1}{m}\, \sum_{i=1}^{m}
+    \Bigl(
+        U(x^i, y^i, w, \phi^{i})
+        - \langle w, \psi(x^i, y^i) \rangle
+    \Bigr)
+    \right].
+    \label{eq:lp-m3n-joint}
+\end{equation}
+Formulation~\eqref{eq:lp-m3n-joint} is the one implemented in this
+thesis.
+
+\subsection{Training procedure for LP-M3N}
+\label{subsec:training-procedure}
+
+Objective~\eqref{eq:lp-m3n-joint} is a sum over training examples
+and contains the neural backbone parameters $\theta$, the pairwise
+matrix $W$, and the per-example duals $\phi^{i}$. It is convex in
+$(W, \phi)$ for fixed unaries but non-convex in $\theta$, and it is
+minimized by mini-batch stochastic optimization: at each step a
+small batch $\mathcal{B} \subset \{1, \ldots, m\}$ replaces the
+full sum and the parameters $(\theta, W, \phi)$ are updated using
+the corresponding subgradient. Plain stochastic gradient descent
+(SGD) with a fixed learning rate is brittle on neural networks, so
+the Adam optimizer is used throughout. Adam maintains per-parameter
+exponential moving averages of the gradient and of its squared
+magnitude, yielding adaptive step sizes that empirically give
+stable convergence on neural networks of the kind used in this
+thesis.
+
+At each training step, a forward pass through the neural backbone
+produces the unary potentials $f_{v}(x, \cdot)$; the per-example
+terms inside the sum of Eq.~\eqref{eq:lp-m3n-joint} are evaluated
+in closed form using the current $\phi^{i}$, and subgradients are
+obtained via automatic differentiation of the $\max$ operations
+(the subgradient of a max is the indicator at the argmax). The
+auxiliary variables $\phi^{i}$ are initialized to zero and stored
+persistently across epochs --- one set per training example --- and
+are updated jointly with $(\theta, W)$ by the same optimizer. No
+inference oracle is called during training; MAP inference
+(Section~\ref{sec:map-inference}) is invoked only at evaluation
+time.

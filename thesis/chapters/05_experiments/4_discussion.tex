@@ -1,0 +1,71 @@
+\section{Discussion}
+\label{sec:experiments-discussion}
+
+% =====================================================================
+%   STUB. Sub-section structure follows OUTLINE_TODO §5.5. Each
+%   subsection is currently a heading + a brief note describing the
+%   material that will land there, drafted from TODO.md where prose
+%   already exists.
+% =====================================================================
+
+\subsection{The $\phi$-saturation pathology}
+\label{subsec:discussion-phi-saturation}
+
+% Material draft (see TODO.md, "Discussion" entry):
+%
+% The terminal Softmax layer in the M3N LeNet-5 variants
+% (Section ref{subsec:method-architecture-backbones}) bounds the
+% unary potentials so that the per-example dual variables phi^i
+% cannot inflate to compensate for an over-confident backbone.
+% Without the Softmax, training empirically degenerates: phi^i grows
+% unboundedly, the pairwise term saturates against it, and the
+% predictor reduces to a per-cell classifier with no constraint
+% propagation. Figure: phi_norm trajectory from
+% history.diagnostics across runs with/without the Softmax tail.
+
+\subsection{$\mathrm{lr\_pairwise}$ rebalancing: CNN-vs-$W$ training
+asymmetry at low $N$}
+\label{subsec:discussion-lr-pairwise}
+
+% Material draft (preserved in TODO.md under "lr_pairwise rebalancing"):
+%
+% Mechanism (durable). At low N the CNN converges much faster than W
+% (CNN has ~60k params + ~36 clue images per puzzle; W has 81 params
+% and needs the constraint structure to emerge from cross-batch
+% gradient pressure). Default identical learning rates leave W
+% under-trained --- the "0.35 plateau" is the structural signature
+% of "CNN done, W partially-learned" (clue cells correct, blanks
+% ~37% accurate via soft-constraint propagation). A larger
+% lr_pairwise rebalances by giving W more gradient juice while
+% leaving the CNN trajectory unchanged.
+%
+% Symptom (reproducible). With lr_pairwise = lr_model = 0.001 (visual
+% Sudoku, N=500, lambda=1e-4, B=32): training plateaus at hamming
+% approx 0.35 by epoch 100 and crawls. Final hamming after 1000
+% epochs approx 0.20, test 0/1 approx 0.83.
+%
+% Effect (validate post-§5.3 rerun). With lr_pairwise = 0.01 (10x
+% lr_model): plateau is crossed by epoch 10. By epoch 25
+% hamming = 0.051, test 0/1 = 0.43. Pre-rerun numbers --- confirm
+% or revise once notebook 05 finishes with the loader fix.
+
+\subsection{Failure modes}
+\label{subsec:discussion-failure-modes}
+
+% Three concrete cases, all populated post-§5.3:
+%   - OCR-baseline puzzles where solver returns infeasible:
+%     solver_feasibility metric, frequency vs OCR error rate
+%   - M3N predictions that violate Sudoku row/column/box constraints:
+%     rate, where they cluster
+%   - Per-puzzle correlation between blank-cell density and 0/1 error
+
+\subsection{Limitations and threats to validity}
+\label{subsec:discussion-limitations}
+
+% N range, single dataset (Kaggle bryanpark/sudoku), BP vs exact
+% decoder gap, finite-seed variance.
+
+\subsection{Connections to broader literature}
+\label{subsec:discussion-connections}
+
+% Franc-Yermakov 2021, Kadlec 2022, SATNet (Wang et al. 2019).

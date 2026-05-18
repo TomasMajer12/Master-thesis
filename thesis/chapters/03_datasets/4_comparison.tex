@@ -1,0 +1,52 @@
+\section{Comparison}
+\label{sec:datasets-comparison}
+
+The two datasets share split sizes and a common visual-rendering
+scheme but differ markedly in graph structure and inference
+tractability. Table~\ref{tab:datasets-comparison} summarises the
+relevant aspects side by side.
+
+\begin{table}[htbp]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{l l l}
+\hline
+\textbf{Aspect} & \textbf{HMC} & \textbf{Sudoku} \\
+\hline
+Task type                 & sequence labeling
+                          & structured prediction \\
+Graph                     & linear chain
+                          & row/column/box constraint graph \\
+$|V|$                     & $T = 30$
+                          & $81$ \\
+$|E|$                     & $29$
+                          & $810$ \\
+Label set $K$             & $10$
+                          & $9$ \\
+Total examples            & $50{,}000$
+                          & $50{,}000$ \\
+Train / val / test        & $30{,}000\,/\,10{,}000\,/\,10{,}000$
+                          & $30{,}000\,/\,10{,}000\,/\,10{,}000$ \\
+Symbolic input shape      & $T \times K$
+                          & $81 \times 9$ \\
+Visual input shape        & $T \times 1 \times 28 \times 28$
+                          & $81 \times 1 \times 28 \times 28$ \\
+MAP inference             & exact (Viterbi, $O(T K^{2})$)
+                          & NP-hard (approximate; Chapter~\ref{chap:method}) \\
+Source                    & synthetic
+                          & Kaggle \texttt{bryanpark/sudoku} \\
+Role in this thesis       & tightness validation
+                          & main task \\
+\hline
+\end{tabular}
+\caption[Datasets summary]{Side-by-side summary of the HMC and
+Sudoku datasets.}
+\label{tab:datasets-comparison}
+\end{table}
+
+Both datasets are built and loaded through the same
+\texttt{build\_*\_benchmark} / \texttt{load\_*\_benchmark} API in
+\texttt{mnlearn.data}. The two main differences highlighted in the
+table are the graph structure (chain vs constraint graph) and the
+consequent tractability of MAP inference (exact on HMC, NP-hard on
+Sudoku).

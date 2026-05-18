@@ -1,0 +1,37 @@
+This chapter describes the two datasets used to train and evaluate
+the methods of this thesis. Each dataset has a \emph{symbolic}
+variant (per-cell or per-step one-hot encoding) and a
+\emph{visual} variant (per-cell or per-step MNIST image). All data
+construction is reproducible from the \texttt{mnlearn.data}
+library.
+
+\section{Overview}
+\label{sec:datasets-overview}
+
+The two datasets play complementary roles. \emph{Sudoku} is the
+main task: a $9 \times 9$ constraint-satisfaction problem with a
+cyclic graph encoding the row, column and box \emph{all-different}
+constraints (Section~\ref{sec:markov-networks}); MAP inference is
+NP-hard on this graph, so it is the harder of the two tasks.
+\emph{HMC} (Hidden Markov Chain) is a synthetic sequence-labeling
+task on a linear chain; MAP inference is exact in
+$O(T K^{2})$ time via the Viterbi algorithm
+(Section~\ref{subsec:viterbi}). HMC therefore serves as a
+\emph{tractable testbed}: the LP relaxation is exact on trees, so on
+chains the LP-relaxed M\textsuperscript{3}N learning loss must
+coincide with exact structured-hinge training, providing an
+end-to-end correctness check for the LP-M3N implementation
+(Chapter~\ref{chap:experiments}).
+
+For each dataset, the symbolic variant supplies a per-cell one-hot
+encoding of the input digit, and the visual variant replaces each
+non-blank digit by a randomly sampled image of that digit drawn
+from MNIST~\cite{LeCun1998}. The MNIST images are partitioned into
+\emph{disjoint pools per split}: the training and validation sets
+draw from disjoint partitions of the MNIST training images, and the
+test set draws exclusively from the MNIST test images. This
+guarantees that no MNIST image used at evaluation time has been
+seen during training or model selection.
+
+A side-by-side comparison of the two datasets is given in
+Section~\ref{sec:datasets-comparison}.

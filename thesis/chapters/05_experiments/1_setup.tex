@@ -1,0 +1,48 @@
+\section{Experimental setup}
+\label{sec:experiments-setup}
+
+This section gathers the protocol decisions that apply to every
+experiment in the chapter.
+
+\paragraph{Hardware and software.}
+Experiments are run on a single NVIDIA GPU (PyTorch \texttt{cuda}
+backend) where available, falling back to CPU on machines without
+one. Reproducibility is enforced through the \texttt{set\_seed}
+helper of Section~\ref{subsec:method-reproducibility}, which
+seeds Python, NumPy, and PyTorch (CPU and CUDA) and sets
+\texttt{torch.backends.cudnn.deterministic = True}. Each run
+dumps a \texttt{config.yaml} artifact that round-trips through
+the loader, so any reported number can be reproduced from its
+own artifact directory.
+
+\paragraph{Repetitions.}
+Every reported number is the mean (plus or minus the sample
+standard deviation) across $S$ random seeds. The tightness
+experiments of Section~\ref{sec:experiments-tightness} use
+$S = 3$; the visual Sudoku results of
+Section~\ref{sec:experiments-sudoku} use $S = 5$. The
+train/validation/test splits are fixed by the benchmark
+builder (Chapter~\ref{chap:datasets}) and shared across all
+seeds; only the optimisation seed varies.
+
+\paragraph{Metrics.}
+The two evaluation losses defined in
+Section~\ref{subsec:loss-functions} are reported in every
+table: the per-cell normalised Hamming loss
+$L_H^{\mathrm{norm}}(y, \hat{y}) \in [0, 1]$ and the per-puzzle
+$0/1$ loss $L_{0/1}(y, \hat{y}) \in \{0, 1\}$. Both are averaged
+over the test split.
+
+\paragraph{Hyperparameter selection.}
+For each experiment, the regularisation strength $\lambda$
+(\texttt{weight\_decay}), learning rate, and schedule offset are
+selected on the held-out validation split (Hamming as the
+monitor metric); other hyperparameters (batch size, number of
+epochs, early-stopping patience) follow the defaults of
+Section~\ref{sec:method-training} unless noted otherwise.
+
+\paragraph{Learning curves.}
+When a metric is plotted as a function of a varying parameter
+(e.g.\ the training-set size $N$ or the regularisation strength
+$\lambda$), the curve shows the mean across seeds with a shaded
+band giving $\pm 1$ standard deviation.

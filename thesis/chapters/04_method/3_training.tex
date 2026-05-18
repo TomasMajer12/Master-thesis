@@ -1,0 +1,143 @@
+\section{Training pipeline}
+\label{sec:method-training}
+
+The structured M\textsuperscript{3}N predictor of
+Section~\ref{sec:method-architecture} is trained through a
+unified pipeline: one \texttt{Trainer} class, two losses, one
+fit loop. This section describes the two training paths
+selectable via YAML
+(Section~\ref{subsec:method-training-paths}), the optimizer
+and learning-rate schedule
+(Section~\ref{subsec:method-training-optimizer}), the
+per-example dual-variable bank that LP-M3N requires
+(Section~\ref{subsec:method-training-phi}), and the
+validation-based hyperparameter-selection protocol
+(Section~\ref{subsec:method-training-hyperparams}).
+
+\subsection{Training paths}
+\label{subsec:method-training-paths}
+
+Two structured losses are selectable via the YAML
+\texttt{training.loss} field; the unified \texttt{Trainer}
+dispatches between them based on this single string.
+
+\paragraph{Structured hinge with Viterbi loss-augmented
+inference (\texttt{m3n\_hinge}).}
+The training loss is the margin-rescaling form of
+Section~\ref{subsec:max-margin}: for each training pair
+$(x, y)$, the loss-augmented oracle returns the
+most-violating labeling $y^{\mathrm{LA}}$, and the loss is
+\begin{equation*}
+    \Delta(x, y, w) \;=\; f(x, y^{\mathrm{LA}}) +
+    \ell(y, y^{\mathrm{LA}}) - f(x, y),
+\end{equation*}
+clamped at zero for safety, though the inner $\max$ already
+guarantees non-negativity. The oracle is exact via Viterbi on
+chains. The corresponding implementation is the
+\texttt{structured\_hinge\_loss} module paired with
+\texttt{loss\_augmented\_viterbi}; this path is selected by
+\texttt{loss: m3n\_hinge} together with
+\texttt{inference.train: viterbi}, and the configuration
+validator rejects mismatched pairings at load time.
+
+\paragraph{LP-relaxed M\textsuperscript{3}N (\texttt{lp\_m3n}).}
+The training loss is the LP-relaxed surrogate of
+Section~\ref{subsec:lp-m3n}: each training example carries its
+own auxiliary variables $\phi^{i}$, and the loss reads
+\begin{equation*}
+    \Delta^{\mathrm{LP}}(x^{i}, y^{i}, w, \phi^{i})
+    \;=\; U(x^{i}, y^{i}, w, \phi^{i})
+    - \langle w, \psi(x^{i}, y^{i}) \rangle.
+\end{equation*}
+No inference oracle is invoked at training time --- the $\max$
+operations in $U$ are local and evaluated in closed form,
+using the bank of $\phi^{i}$ tensors described in
+Section~\ref{subsec:method-training-phi}. This is the training
+path used on the Sudoku graph; it is also exercised on chains
+in the tightness-validation experiment of
+Chapter~\ref{chap:experiments}. The corresponding
+implementation is the \texttt{lp\_m3n\_loss} module, selected
+by \texttt{loss: lp\_m3n} together with
+\texttt{inference.train: lp}.
+
+\paragraph{Common scaffolding.}
+The remainder of the fit loop is identical for both losses.
+Each epoch shuffles the training indices via
+\texttt{torch.randperm($N$)}, slices them into mini-batches of
+size $B$, and for each mini-batch performs one forward pass
+through the backbone, one loss-and-backward step, and one
+optimizer step. After each epoch the trainer evaluates Hamming
+and $0/1$ on the training and validation splits, records
+diagnostics, and decides whether to early-stop.
+
+\subsection{Optimizer and learning-rate schedule}
+\label{subsec:method-training-optimizer}
+
+The optimizer is selectable in YAML (\texttt{optimizer.type});
+in every experiment of this thesis it is \texttt{adam}, with
+SGD supported as an alternative. The optimizer splits the
+trainable parameters into up to three groups, each with its own
+learning rate:
+\begin{itemize}
+    \item Group $0$ --- the backbone parameters $\theta$, with
+    learning rate $\eta_{0}$ (\texttt{optimizer.lr}) and weight
+    decay \texttt{optimizer.weight\_decay}.
+    \item Group $1$ --- the pairwise matrix $W$, with learning
+    rate \texttt{optimizer.lr\_pairwise} and the same weight
+    decay. This group is present for both losses.
+    \item Group $2$ --- the per-example duals $\phi^{i}$
+    (LP-M3N only), with learning rate \texttt{optimizer.lr\_phi}
+    and weight decay \texttt{optimizer.weight\_decay\_phi}, both
+    discussed in Section~\ref{subsec:method-training-phi}.
+\end{itemize}
+The motivation for splitting $W$ off into its own group is the
+asymmetric training dynamics between the high-parameter-count
+backbone and the small ($K \times K$) pairwise matrix at low
+training-set size $N$, discussed empirically in
+Chapter~\ref{chap:experiments}.
+
+The learning rate decays through a \emph{hyperbolic} schedule
+\begin{equation}
+    \eta_{t} \;=\; \eta_{0} \cdot
+    \frac{\mathrm{offset}}{\mathrm{offset} + t},
+    \label{eq:method-lambda-schedule}
+\end{equation}
+where $t$ counts epochs and \texttt{offset} is a YAML knob.
+With \texttt{offset = 100} the multiplier is $1$ at $t = 0$,
+$0.5$ at $t = 100$, and $0.1$ at $t = 900$. The choice is
+empirically motivated: a fast initial decay locks in the
+unary classifier within the first few tens of epochs while the
+slow tail preserves gradient signal for the pairwise term,
+which is harder to learn.
+
+\subsection{Per-example dual variables}
+\label{subsec:method-training-phi}
+
+The LP-M3N loss of Section~\ref{subsec:lp-m3n} requires a set
+of per-example auxiliary variables
+$\phi^{i} \in \mathbb{R}^{2 \times |E| \times K}$, one set per
+training example $i$. The \texttt{Trainer} pre-allocates this
+\emph{$\phi$-bank} at construction time (zero-initialized;
+persists across epochs), and passes it to the optimizer as a
+separate parameter group with its own learning rate
+\texttt{lr\_phi}. The motivation for a separate rate is the
+asymmetric update frequency under mini-batch SGD: each model
+parameter is updated $\sim N / B$ times per epoch, but each
+$\phi^{i}$ is updated exactly once (its example appears in
+exactly one mini-batch per epoch). Without compensation, a
+single global learning rate either inflates $\phi$ in lockstep
+with the backbone or starves the dual of signal.
+
+\subsection{Hyperparameter selection}
+\label{subsec:method-training-hyperparams}
+
+Hyperparameters (learning rates, weight decays, schedule
+offset, batch size, number of epochs) are selected on the
+held-out validation split. Each experiment YAML names a single
+scalar metric to monitor; training is stopped when this metric
+fails to improve for \texttt{patience} consecutive evaluation
+ticks, and the model state is reverted to the best-monitored
+snapshot on exit. The $\phi$-bank is not snapshotted and
+remains at its last-epoch values, which is harmless because
+evaluation-time decoding uses only the model's unary and
+pairwise outputs.

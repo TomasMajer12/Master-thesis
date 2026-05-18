@@ -1,0 +1,180 @@
+This chapter introduces the theoretical machinery used in the rest
+of the thesis: the structured-prediction setting and the loss
+functions (Section~\ref{sec:structured-prediction}); Markov Networks as the
+structured decision layer (Section~\ref{sec:markov-networks}); MAP
+inference on chains and on cyclic graphs
+(Section~\ref{sec:map-inference}); max-margin learning with the
+LP-relaxed surrogate (Section~\ref{sec:learning-mn}); and the neural
+feature extractors that supply the unary potentials
+(Section~\ref{sec:nn-features}). The notation used throughout is
+summarized below.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{l l}
+\hline
+\textbf{Symbol} & \textbf{Meaning} \\
+\hline
+$\mathcal{X},\ \mathcal{Y}$ & input and output (label) sets \\
+$K = |\mathcal{Y}|$ & number of labels \\
+$N = |V|$ & number of output variables \\
+$T$ & chain length (chain graphs only; $T = N$ for chains) \\
+$x,\ y$ & input and joint output configuration \\
+$y_v$ & label at node $v$ \\
+$G = (V, E)$ & graph of the Markov network \\
+$\mathcal{N}(v)$ & set of neighbours of node $v$ in $G$ \\
+$f(x, y)$ & joint score (unnormalized log-probability) \\
+$f_v(x, y_v)$ & unary potential at node $v$ \\
+$f_{vv'}(y_v, y_{v'})$ & pairwise potential at edge $\{v, v'\}$ \\
+$\psi(x, y)$ & joint feature map \\
+$w \in \mathbb{R}^d$ & Markov-network parameter vector \\
+$\theta$ & neural backbone parameters \\
+$g_\theta$ & neural backbone (unary feature extractor) \\
+$W \in \mathbb{R}^{K \times K}$ & learned pairwise potential matrix (shared across edges) \\
+$\mu_v(a),\ \mu_{vv'}(a, b)$ & relaxed LP indicators \\
+$\phi^{i}$ & per-example dual variables in LP-M3N \\
+$\Delta,\ \Delta^{\mathrm{LP}}$ & margin-rescaling loss and LP-relaxed surrogate \\
+$\ell$ & task loss used at training (Hamming) \\
+$L_{0/1},\ L_H$ & evaluation losses (0/1, Hamming) \\
+$\lambda$ & regularization strength \\
+$m$ & training-set size \\
+$\mathcal{D}$ & training set $\{(x^i, y^i)\}_{i=1}^{m}$ \\
+$\hat{y}$ & MAP-predicted labeling \\
+\hline
+\end{tabular}
+\end{center}
+
+\bigskip
+
+\section{Structured Prediction}
+\label{sec:structured-prediction}
+
+Standard classification maps an input $x$ to a single label from a
+finite set. In many real-world problems, however, the output is not a
+single label but a composite object whose components are interdependent.
+Parsing a sentence yields a tree, segmenting an image yields a labeling
+of every pixel, and solving a Sudoku puzzle yields a $9 \times 9$ grid
+in which every cell label is constrained by the labels of every other
+cell in its row, column, and box. Problems of this form are known as
+\emph{structured output prediction}~\cite{Bakir2007}.
+
+\subsection{Formal setting}
+
+Let $\mathcal{X}$ denote the input space, $\mathcal{Y} = \{1, \ldots,
+K\}$ a finite per-component label set, and $N$ the number of output
+components. A structured-output predictor is a function
+$h\colon \mathcal{X} \to \mathcal{Y}^{N}$ that maps each input to a
+joint configuration $y = (y_1, \ldots, y_N)$. Two features
+distinguish the structured case from ordinary classification:
+\begin{itemize}
+    \item The joint output space $\mathcal{Y}^{N}$ grows exponentially
+    with the number of output variables. For a Sudoku grid with
+    $N = 81$ cells and $K = 9$ possible digits,
+    $|\mathcal{Y}^{N}| = 9^{81} \approx 2 \cdot 10^{77}$ raw
+    configurations, even before any constraint is imposed. Enumerating
+    $\mathcal{Y}^{N}$ is therefore infeasible.
+    \item Output components are not independent. The quality of a
+    configuration is a joint quantity that couples several variables at
+    once.
+\end{itemize}
+
+A convenient way to handle both properties is to introduce a scoring
+function $f\colon \mathcal{X} \times \mathcal{Y}^{N} \to \mathbb{R}$
+and to define the predictor as
+\begin{equation}
+    h(x) \;=\; \argmax_{y \in \mathcal{Y}^{N}} f(x, y).
+    \label{eq:map-prediction}
+\end{equation}
+
+Equation~\eqref{eq:map-prediction} is referred to as \emph{MAP
+prediction} (maximum-a-posteriori), since in probabilistic models
+$f(x, y)$ plays the role of an unnormalized log-probability. For this
+formulation to be useful in practice, the scoring function $f$ must
+admit a compact parameterization that captures the dependencies among
+the output components, and the argmax must be solvable without
+enumerating $\mathcal{Y}^{N}$ (Section~\ref{sec:map-inference}).
+
+
+\subsection{Loss functions}
+\label{subsec:loss-functions}
+
+Learning and evaluation both require a notion of how wrong a prediction
+$\hat{y}$ is relative to a ground-truth output $y$. The structured
+problems considered in this thesis decompose into $N$ components,
+$y = (y_1, \ldots, y_N)$ with $y_i \in \{1, \ldots, K\}$. Two loss
+functions are used throughout.
+
+\paragraph{0/1 loss.}
+The strict all-or-nothing loss counts a prediction as correct only when
+every component matches:
+\begin{equation}
+    L_{0/1}(y, \hat{y}) \;=\; \mathbb{I}\!\left[y \neq \hat{y}\right]
+    \;=\; 1 - \prod_{i=1}^{N} \mathbb{I}\!\left[y_i = \hat{y}_i\right],
+    \label{eq:zero-one-loss}
+\end{equation}
+which equals $1$ whenever the predicted vector differs from the
+ground truth in at least one position, and $0$ otherwise. This is
+the natural measure when a partially correct answer is useless: a
+Sudoku grid with a single wrong digit is not a valid solution.
+
+\paragraph{Hamming loss.}
+The Hamming loss counts the number of component-wise mismatches,
+\begin{equation}
+    L_{H}(y, \hat{y}) \;=\; \sum_{i=1}^{N}
+    \mathbb{I}\!\left[y_i \neq \hat{y}_i\right],
+    \label{eq:hamming-loss}
+\end{equation}
+and the \emph{normalized} Hamming loss divides by $N$ to obtain a
+quantity in $[0, 1]$:
+\begin{equation}
+    L_{H}^{\mathrm{norm}}(y, \hat{y}) \;=\;
+    \frac{1}{N} \sum_{i=1}^{N}
+    \mathbb{I}\!\left[y_i \neq \hat{y}_i\right].
+    \label{eq:hamming-loss-norm}
+\end{equation}
+Hamming loss is a finer-grained measure that rewards partial
+correctness. Together with the 0/1 loss it forms the evaluation pair
+used in Chapter~\ref{chap:experiments}.
+
+Throughout this thesis, the normalized Hamming loss serves a dual
+role: as the task loss $\ell$ used inside max-margin training
+(Section~\ref{sec:learning-mn}), and as one of the evaluation losses
+reported in Chapter~\ref{chap:experiments}. The 0/1 loss is used at
+evaluation time only --- it is not node-decomposable and is
+incompatible with margin-rescaling at training time.
+
+\subsection{Risk minimization}
+
+The goal of learning is to select a predictor $h$ that minimizes the
+\emph{expected risk}
+\begin{equation}
+    R(h) \;=\; \mathbb{E}_{(x, y) \sim p}\!\left[
+    L\bigl(y, h(x)\bigr) \right],
+    \label{eq:expected-risk}
+\end{equation}
+where $p$ is the unknown data-generating distribution and $L$ is a
+task-specific loss. Since $p$ is not available, one works with a
+training sample
+$\mathcal{D} = \{(x^i, y^i)\}_{i=1}^{m}$ drawn i.i.d.\ from $p$ and
+minimizes the \emph{empirical risk}
+\begin{equation}
+    \hat{R}(h) \;=\; \frac{1}{m} \sum_{i=1}^{m}
+    L\bigl(y^i, h(x^i)\bigr).
+    \label{eq:empirical-risk}
+\end{equation}
+
+In practice, the labeled data are split into three disjoint
+subsets: a \emph{training set} on which the empirical risk (or its
+surrogate) is minimized, a \emph{validation set} used to select
+hyperparameters such as the regularization strength of
+Section~\ref{sec:learning-mn} and to monitor overfitting, and a
+\emph{test set}, held out until the end, that yields an unbiased
+estimate of the expected risk.
+
+Directly minimizing the 0/1 or Hamming loss over a structured output
+space is generally intractable: the losses are discrete, and the
+hypothesis class defined by Eq.~\eqref{eq:map-prediction} is piecewise
+constant in its parameters. Practical learning algorithms therefore
+minimize a convex \emph{surrogate} loss --- such as the max-margin loss
+discussed in Section~\ref{sec:learning-mn} --- while aiming to control
+the original risk.

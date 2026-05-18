@@ -1,0 +1,62 @@
+This chapter pins down the concrete method developed in this
+thesis: the predictor architecture
+(Section~\ref{sec:method-architecture}), the training pipeline
+that fits its parameters (Section~\ref{sec:method-training}),
+the inference algorithm used at evaluation time
+(Section~\ref{sec:method-inference}), the baselines
+that the predictor is compared against
+(Section~\ref{sec:method-baseline}), and the Python library
+that implements all of the above
+(Section~\ref{sec:method-implementation}).
+
+\section{Overview}
+\label{sec:method-overview}
+
+The proposed predictor follows the neuro-symbolic architecture
+of Section~\ref{sec:nn-features}: a neural backbone supplies
+the per-cell unary potentials of a Markov Network, and a
+shared pairwise matrix is learned jointly with the backbone
+through a single structured loss.
+
+Two design choices control the pipeline end-to-end:
+\begin{itemize}
+    \item \textbf{Graph structure} --- determined by the
+    task. Chain graphs (the HMC dataset of
+    Section~\ref{sec:datasets-hmc}) admit exact MAP inference
+    via Viterbi (Section~\ref{subsec:viterbi}), so the
+    structured-hinge loss with a Viterbi loss-augmented oracle
+    can be used during training. Cyclic graphs (the Sudoku
+    dataset of Section~\ref{sec:datasets-sudoku}) make MAP
+    NP-hard; training switches to the LP-relaxed
+    M\textsuperscript{3}N loss of
+    Section~\ref{subsec:lp-m3n}, and inference at evaluation
+    time falls back to an approximate decoder (Belief
+    Propagation, presented in
+    Section~\ref{sec:method-inference}).
+    \item \textbf{Input modality} --- determined by the
+    dataset. Symbolic inputs use a one-hot encoding and a
+    linear backbone; visual inputs use a stack of MNIST
+    images and the LeNet-5 backbone of
+    Section~\ref{subsec:method-architecture-backbones}. The
+    same trainer, optimizer, and inference path are reused
+    across modalities; only the architecture YAML changes.
+\end{itemize}
+
+Two baselines are used for comparison
+(Section~\ref{sec:method-baseline}): a two-stage OCR + solver
+pipeline for visual Sudoku, which isolates the contribution of
+joint structured training by replacing the M\textsuperscript{3}N
+decision layer with a hard-coded solver while reusing the same
+backbone; and a Forward-Backward marginal classifier on symbolic
+HMC, which serves as the Bayes-optimal oracle floor in the chain
+tightness experiments. The proposed M\textsuperscript{3}N
+predictor is compared against both in
+Chapter~\ref{chap:experiments}.
+
+Every experiment in this thesis is driven by a YAML file
+(Section~\ref{subsec:method-yaml}); the corresponding YAMLs
+are listed in Chapter~\ref{chap:experiments}, and the
+artifact format described in
+Section~\ref{subsec:method-reproducibility} guarantees that
+any reported number can be reproduced from a single
+\texttt{config.yaml}.

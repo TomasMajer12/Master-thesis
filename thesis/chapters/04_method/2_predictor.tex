@@ -1,0 +1,167 @@
+\section{Predictor architecture}
+\label{sec:method-architecture}
+
+The M\textsuperscript{3}N predictor consists of two components:
+a neural \emph{backbone} that produces per-cell unary
+potentials from the input, and a \emph{Markov Network decision
+layer} that combines those unary potentials with a learned
+pairwise matrix to score complete labelings. This section
+pins down the concrete configurations of both components used
+in the experiments of Chapter~\ref{chap:experiments}: the
+backbones in
+Section~\ref{subsec:method-architecture-backbones}, the edge
+sets and pairwise parameterization for the MN layer in
+Section~\ref{subsec:method-architecture-mn}, and the
+composition that ties the two together in the \texttt{M3N}
+class in Section~\ref{subsec:method-architecture-full}.
+
+\subsection{Backbone configurations}
+\label{subsec:method-architecture-backbones}
+
+The abstract backbone interface of
+Section~\ref{subsec:backbone-interface} is realised through the
+\texttt{ConfigBackbone} class
+(Section~\ref{subsec:method-config-backbone}): each
+architecture is declared as a list of layer specifications in
+YAML, and the per-node forward pass shares parameters across
+all nodes. Two concrete architectures are exercised in this
+thesis: a linear-only baseline used on symbolic input data,
+and a LeNet-5 convolutional network used on every visual
+input.
+
+\paragraph{Linear baseline.}
+A single linear layer mapping the per-cell one-hot encoding of
+the symbolic observation to $K$ unary scores. Two instances are
+used in this thesis: $K = 10$ on symbolic HMC and $K = 9$ on
+symbolic Sudoku. The resulting predictor has $K \times K$
+trainable backbone parameters plus the $K \times K$ pairwise
+matrix --- the simplest possible structured predictor, and a
+sanity-check that the LeNet-5 + LP-M3N stack ought to match on
+symbolic data and beat on visual data.
+
+\paragraph{LeNet-5.}
+A convolutional stack following the modern LeNet-5 variant
+popularised in \emph{Dive into Deep Learning}~\cite{d2l-lenet}:
+three convolutional blocks (the first two each followed by
+$2\!\times\!2$ max pooling, the third operating on a
+$5\!\times\!5$ feature map and collapsing it to $1\!\times\!1$),
+followed by two fully connected layers. Differences from the
+original 1998 LeNet-5 of~\cite{LeCun1998} are ReLU activations in
+place of $\tanh$, max-pooling in place of average pooling, and
+the collapsed third convolution in place of an additional fully
+connected layer. The exact layer sequence is shown in
+Figure~\ref{fig:method-lenet5-yaml}; the only difference between
+the Sudoku ($K = 9$) and HMC ($K = 10$) variants is the output
+dimension of the final linear layer.
+
+\begin{figure}[htbp]
+\begin{verbatim}
+backbone:
+  type: config
+  layers:
+    - {type: conv2d, in_channels: 1,  out_channels: 6,   kernel_size: 5, padding: 2}
+    - {type: relu}
+    - {type: maxpool2d, kernel_size: 2}
+    - {type: conv2d, in_channels: 6,  out_channels: 16,  kernel_size: 5}
+    - {type: relu}
+    - {type: maxpool2d, kernel_size: 2}
+    - {type: conv2d, in_channels: 16, out_channels: 120, kernel_size: 5}
+    - {type: relu}
+    - {type: flatten, start_dim: 1}
+    - {type: linear, in_features: 120, out_features: 84}
+    - {type: relu}
+    - {type: linear, in_features: 84,  out_features: K}
+    - {type: Softmax, dim: 1}
+\end{verbatim}
+\caption[LeNet-5 backbone YAML]{LeNet-5 backbone, excerpt of
+\texttt{configs/architectures/sudoku\_lenet5.yaml}. $K = 9$ on
+Sudoku and $K = 10$ on visual HMC; everything else is shared.}
+\label{fig:method-lenet5-yaml}
+\end{figure}
+
+\subsection{Markov Network decision layer}
+\label{subsec:method-architecture-mn}
+
+The decision layer takes the unary potentials produced by the
+backbone and combines them with a learned pairwise matrix
+$W \in \mathbb{R}^{K \times K}$ to score a complete labeling
+$y \in \{1, \ldots, K\}^{|V|}$ via the M\textsuperscript{3}N
+score of Section~\ref{sec:nn-features},
+\begin{equation}
+    f(x, y) \;=\; \sum_{v \in V}
+    \bigl[ g_\theta(x_v) \bigr]_{y_v}
+    \;+\; \sum_{\{u, v\} \in E} W_{y_u,\, y_v}.
+    \label{eq:method-mn-score}
+\end{equation}
+Two design decisions pin down the layer concretely.
+
+\paragraph{Pairwise parameterization.}
+$W$ is a single $K \times K$ matrix shared across every edge
+of the graph, so the model carries no explicit notion of edge
+type --- on the Sudoku graph, the row, column, and box edges
+all consult the same pairwise weights. This is what makes the
+all-different constraint of
+Section~\ref{sec:markov-networks} \emph{learned soft}: the
+network has to discover, from data, that the pairwise potential
+should penalise equal-label configurations $W_{a, a}$.
+Initialisation is Gaussian with standard deviation
+\texttt{pairwise.init\_scale}, set to $0.1$ across all
+architecture YAMLs --- small enough that early training is
+dominated by the unary term (which is easier to learn first),
+large enough that $W$ has a non-zero starting gradient signal
+at the first training step.
+
+\paragraph{Edge sets.}
+The edge list is not baked into the model. It is produced by a
+graph constructor at runtime and passed to the score function
+and inference decoders alongside the unary potentials. Two
+constructors are used:
+\begin{itemize}
+    \item \texttt{chain\_edges($T$)} returns the chain
+    $0\text{--}1\text{--}\cdots\text{--}(T - 1)$ as a
+    $[T - 1, 2]$ tensor. Used by the HMC tasks with
+    $T = 30$.
+    \item \texttt{sudoku\_edges()} returns the Sudoku
+    constraint graph: every pair of cells that shares a row,
+    column, or $3 \times 3$ box. The result is an $[810, 2]$
+    tensor, matching the $|V| = 81$, $|E| = 810$ counts
+    reported in Section~\ref{sec:markov-networks}.
+\end{itemize}
+Decoupling the edge list from the model means the same
+\texttt{M3N} instance is reused across both tasks; the
+constructor is selected by the architecture YAML's
+\texttt{graph} block.
+
+\subsection{Full predictor}
+\label{subsec:method-architecture-full}
+
+The two pieces are composed in the \texttt{M3N} class of
+\texttt{mnlearn.models}:
+\begin{itemize}
+    \item Constructor:
+    \texttt{M3N(backbone, num\_classes, pairwise\_init\_scale)}
+    stores the backbone module and registers the pairwise
+    matrix as a learnable \texttt{nn.Parameter}, so the
+    optimizer sees both as trainable parameters in a single
+    \texttt{model.parameters()} pass.
+    \item \texttt{forward($x$)}: runs the backbone and returns
+    the unary potentials of shape $[\mathrm{batch}, |V|, K]$.
+    This is the entry point used by inference at evaluation
+    time.
+    \item \texttt{score($u$, $y$, \mathrm{edges})}: computes
+    Eq.~\eqref{eq:method-mn-score} for unary potentials $u$, a
+    labeling $y$, and an edge list. Differentiable in $u$
+    and in the pairwise matrix; not differentiable in $y$ (an
+    integer labeling). Used inside the structured-hinge
+    subgradient (Section~\ref{subsec:structured-hinge}) and in
+    unit tests.
+\end{itemize}
+
+The full predictor is constructed from an
+\texttt{ArchitectureCfg} through the \texttt{build\_model}
+factory of \texttt{mnlearn.models}: the factory builds the
+backbone via \texttt{build\_backbone}
+(Section~\ref{subsec:method-config-backbone}), the edge list
+via \texttt{build\_graph}, and returns the pair
+\texttt{(M3N, edges)} ready to be moved to the training
+device.

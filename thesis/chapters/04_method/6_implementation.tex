@@ -1,0 +1,84 @@
+\section{Implementation: the \texttt{mnlearn} library}
+\label{sec:method-implementation}
+
+The system is implemented as a Python package called
+\texttt{mnlearn}. The package separates concerns into seven
+self-contained subsystems, each exposing a stable public API
+through its \texttt{\_\_init\_\_.py}. This section describes
+the library layout (Section~\ref{subsec:method-lib-layout}),
+the YAML configuration system that drives every experiment
+(Section~\ref{subsec:method-yaml}), and the reproducibility
+guarantees the runners provide
+(Section~\ref{subsec:method-reproducibility}).
+
+\subsection{Library layout}
+\label{subsec:method-lib-layout}
+
+The package is organised into seven submodules covering data,
+models, inference, learning, baselines, configuration, and
+experiment aggregation. A summary of which module owns what is
+in \texttt{docs/architecture.md} alongside the source.
+
+Two top-level entry points run experiments end-to-end. The
+structured-prediction path is
+\texttt{mnlearn.learning.train(cfg)}, which loads the config,
+sets the seed, builds data + model + trainer, fits, evaluates
+on the test split, and dumps artifacts. The two-stage baseline
+path is \texttt{mnlearn.baselines.train\_baseline(cfg)} and
+follows the same API. Both runners share the runtime helpers
+in \texttt{mnlearn.learning.runtime}, so the artifact format is
+identical across runs.
+
+\subsection{YAML configuration system}
+\label{subsec:method-yaml}
+
+Every experiment is driven by a YAML config that maps to a
+dataclass schema in \texttt{mnlearn.config}. Three flavours of
+YAML exist: an architecture YAML (backbone + graph), an
+M\textsuperscript{3}N experiment YAML, and a baseline
+experiment YAML; experiment YAMLs reference an architecture
+YAML either by relative path or as an inline dict, and both
+forms round-trip through the loader. A validator catches
+malformed configurations at load time (e.g.\ an OCR baseline
+architecture that ends in Softmax, or an M\textsuperscript{3}N
+experiment that pairs \texttt{m3n\_hinge} with an LP-relaxation
+oracle). A complete reference for every YAML field is
+maintained in \texttt{docs/yaml\_reference.md} alongside the
+source.
+
+\subsection{Reproducibility}
+\label{subsec:method-reproducibility}
+
+Each runner sets every random source the project touches before
+constructing the data, model, or trainer. The
+\texttt{set\_seed(s)} helper in
+\texttt{mnlearn.learning.runtime} seeds Python's
+\texttt{random}, NumPy's legacy global RNG (used by the data
+builders), PyTorch's CPU RNG, and PyTorch's CUDA RNG on every
+device, then sets
+\texttt{torch.backends.cudnn.deterministic = True} and
+\texttt{cudnn.benchmark = False} so convolutions pick the same
+algorithm every run.
+
+Every experiment dumps a fixed artifact set into the resolved
+output directory (default \texttt{results/<experiment.name>}):
+\begin{itemize}
+    \item \texttt{config.yaml} --- the configuration as
+    actually executed, with the resolved \texttt{output\_dir}
+    baked in. This is a round-trippable input to the loader,
+    so a run can be replayed exactly from its own artifact.
+    \item \texttt{history.json} --- per-epoch training and
+    validation metrics plus run diagnostics ($\phi$ norm for
+    LP-M3N, learning rate, etc.).
+    \item \texttt{results.json} --- final test-split metrics:
+    Hamming and $0/1$ for the structured runner; $0/1$, solver
+    feasibility, and OCR clue error for the two-stage baseline
+    (Section~\ref{subsec:method-baseline-two-stage}).
+    \item \texttt{model.pt} --- the trained
+    \texttt{state\_dict()}.
+\end{itemize}
+
+Together, the YAML round-trip and the artifact set mean every
+result reported in Chapter~\ref{chap:experiments} can be
+reproduced from a single \texttt{config.yaml} file plus the
+data benchmarks of Chapter~\ref{chap:datasets}.

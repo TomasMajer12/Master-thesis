@@ -1,0 +1,39 @@
+\section{Inference at evaluation time}
+\label{sec:method-inference}
+
+At evaluation time the trained predictor maps an input to a
+MAP labeling by maximising the joint score
+$f(x, y)$ of Eq.~\eqref{eq:method-mn-score} over
+$y \in \mathcal{Y}^{|V|}$. The choice of decoder is dictated
+by the graph structure: chains admit an exact polynomial-time
+decoder, while cyclic graphs require an approximate method.
+This section names the concrete decoders used and points to
+where in the theoretical background each is derived. The
+decoder is selected by the YAML field
+\texttt{training.inference.eval} and dispatched by
+\texttt{mnlearn.inference}.
+
+\subsection{Chains: Viterbi}
+\label{subsec:method-inference-viterbi}
+
+On chain graphs the inner $\arg\max$ is solved exactly in
+$O(T K^{2})$ time by the Viterbi algorithm of
+Section~\ref{subsec:viterbi}, implemented in
+\texttt{mnlearn.inference.viterbi\_decode} and selected by
+\texttt{inference.eval: viterbi} in the experiment YAML.
+
+\subsection{Cyclic graphs: Belief Propagation}
+\label{subsec:method-inference-cyclic}
+
+On the Sudoku constraint graph, MAP is NP-hard
+(Section~\ref{sec:map-inference}) and the dynamic-programming
+factorisation of Section~\ref{subsec:viterbi} no longer applies.
+The decoder used in this thesis is the loopy max-sum Belief
+Propagation algorithm of
+Section~\ref{subsec:belief-propagation}, implemented in
+\texttt{mnlearn.inference.bp\_decode}. Messages are
+re-normalised by subtracting the per-edge maximum after each
+update for numerical stability. The number of message-passing
+iterations is a YAML knob
+(\texttt{inference.params.bp\_iters}, default $50$); the
+decoder is selected by \texttt{inference.eval: bp}.

@@ -1,0 +1,126 @@
+\section{Markov Networks}
+\label{sec:markov-networks}
+
+This section introduces the model class used as the final decision
+layer of the predictor: Markov Networks (MNs), also known as Markov
+Random Fields. An MN is a graphical model in which dependencies
+between output variables are encoded by an undirected graph, and the
+joint score of a configuration decomposes into local terms attached
+to nodes and edges. Both structural variants considered in this
+thesis --- linear chains and general graphs --- are special cases of
+the formalism developed below. The setting is \emph{discriminative}:
+the score $f(x, y)$ conditions on the input $x$ and the model does
+not attempt to estimate $p(x)$, distinguishing it from generative
+graphical models such as Hidden Markov Models in which the joint
+distribution $p(x, y)$ is modeled and the input is treated as a
+random variable. A comprehensive treatment of graphical models is
+given by~\cite{Koller2009}.
+
+\subsection{Graph, variables, and factorization}
+
+Let $G = (V, E)$ be an undirected graph with $N = |V|$ nodes. Each
+node $v \in V$ carries a discrete random variable $y_v$ taking values
+in a finite label set $\mathcal{Y} = \{1, \ldots, K\}$. A joint
+configuration is therefore an element $y = (y_v)_{v \in V} \in
+\mathcal{Y}^{N}$.
+
+For the tasks considered in this thesis, the score of a configuration
+decomposes over the nodes and edges of $G$:
+\begin{equation}
+    f(x, y) \;=\; \sum_{v \in V} f_v(x, y_v)
+    \;+\; \sum_{\{v, v'\} \in E} f_{vv'}(y_v, y_{v'}),
+    \label{eq:mn-score}
+\end{equation}
+where $f_v$ is a \emph{unary} term coupling the observation $x$ to the
+label of node $v$, and $f_{vv'}$ is a \emph{pairwise} term encoding
+the compatibility of the labels at neighbouring nodes. Equation
+\eqref{eq:mn-score} describes a \emph{pairwise} MN; higher-order
+cliques are possible in general, but the pairwise form is sufficient
+for both the linear-chain and the Sudoku models used here.
+
+The undirected graph $G$ encodes a conditional-independence
+structure: given the labels of its neighbours, $y_v$ is conditionally
+independent of all other variables. This is the defining
+\emph{Markov property} from which the model class takes its name.
+
+\subsection{Linear parameterization}
+\label{subsec:linear-param}
+
+The scoring functions in Eq.~\eqref{eq:mn-score} are assumed to be
+linear in a shared parameter vector $w \in \mathbb{R}^d$. Given fixed
+feature maps
+$\psi_v\colon \mathcal{X} \times \mathcal{Y} \to \mathbb{R}^d$ and
+$\psi_{vv'}\colon \mathcal{Y} \times \mathcal{Y} \to \mathbb{R}^d$, the
+unary and pairwise terms take the form
+\begin{equation}
+    f_v(x, y_v) = \langle w, \psi_v(x, y_v) \rangle,
+    \qquad
+    f_{vv'}(y_v, y_{v'}) = \langle w, \psi_{vv'}(y_v, y_{v'}) \rangle.
+\end{equation}
+Defining the \emph{joint feature map}
+\begin{equation}
+    \psi(x, y) \;=\; \sum_{v \in V} \psi_v(x, y_v)
+    \;+\; \sum_{\{v, v'\} \in E} \psi_{vv'}(y_v, y_{v'})
+    \label{eq:joint-feature}
+\end{equation}
+then yields the compact expression
+\begin{equation}
+    f(x, y) \;=\; \langle w, \psi(x, y) \rangle.
+    \label{eq:linear-score}
+\end{equation}
+Equation~\eqref{eq:linear-score} is the starting point for the
+max-margin learning theory of Section~\ref{sec:learning-mn}. The
+joint-feature-map parameterization is standard in structured output
+learning~\cite{Taskar2004, Tsochantaridis2005}. The architectures
+used in this thesis depart from strict linearity
+(Section~\ref{sec:nn-features}): the unary potential is produced by
+a neural network with parameters $\theta$, and the pairwise
+potential is a learned matrix $W \in \mathbb{R}^{K \times K}$ shared
+across edges. The abstract notation $\langle w, \psi(x, y)\rangle$
+is retained for the derivations of Section~\ref{sec:learning-mn};
+from Section~\ref{subsec:training-procedure} onwards the parameters
+are referenced as $(\theta, W)$ explicitly.
+
+\subsection{Special cases}
+
+Two instances of the general model above are used throughout the
+thesis.
+
+\paragraph{Linear-chain MN.}
+For sequence labeling of length $T$, the graph is the linear chain
+\begin{equation}
+    V = \{0, 1, \ldots, T - 1\},
+    \qquad
+    E = \{\{t-1, t\} : t = 1, \ldots, T - 1\}.
+\end{equation}
+The score in Eq.~\eqref{eq:mn-score} reduces to
+\begin{equation}
+    f(x, y) \;=\; \sum_{t=0}^{T-1} f_t(x, y_t)
+    \;+\; \sum_{t=1}^{T-1} f_{t-1, t}(y_{t-1}, y_t),
+    \label{eq:chain-score}
+\end{equation}
+which is the discriminative, score-based form of a linear-chain
+conditional random field~\cite{Lafferty2001}. MAP inference on chains
+admits an exact $O(T \cdot K^2)$ dynamic-programming solution,
+described in Section~\ref{sec:map-inference}.
+
+\paragraph{Sudoku MN.}
+For a $9 \times 9$ Sudoku puzzle, $V$ contains the 81 cells and
+$\mathcal{Y} = \{1, \ldots, 9\}$. The edge set $E$ connects every pair
+of cells that share a row, a column, or a $3 \times 3$ box ---
+i.e.~every pair of cells that must take distinct values. Each cell
+has $20$ such neighbours ($8$ in its row, $8$ in its column, and $4$
+further cells in its $3 \times 3$ box), giving $|V| = 81$ and
+$|E| = 810$. The pairwise potentials $f_{vv'}$ encode the \emph{all-different}
+constraint along these edges. In principle they can be set as a hard
+constraint ($f_{vv'}(a, a) = -\infty$ for all $a \in \mathcal{Y}$);
+the architectures used in this thesis instead learn the pairwise
+matrix $W \in \mathbb{R}^{K \times K}$ from data with no hard
+constraint imposed (Section~\ref{sec:nn-features}).
+The unary potentials $f_v(x, y_v)$ carry the evidence for cell $v$
+coming from the input (a digit for symbolic input, an image for
+visual input).
+
+The Sudoku graph contains many cycles, so exact MAP inference is
+NP-hard in general. Section~\ref{sec:map-inference} discusses
+approximate MAP inference on such cyclic graphs.

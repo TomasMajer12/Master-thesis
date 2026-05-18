@@ -1,0 +1,157 @@
+\section{Motivation}
+
+Structured prediction tackles tasks whose output is a composite
+object with interdependent components. Unlike standard
+classification, where each input maps to a single label,
+structured prediction must account for relationships between
+output components. Typical examples include sequence labeling in
+natural language processing, pixel-wise segmentation in computer
+vision, and reasoning over combinatorial domains such as puzzles
+and games.
+
+Two aspects make structured prediction challenging. First, the
+output space grows exponentially with the number of variables,
+which renders exhaustive enumeration infeasible and calls for
+specialized inference algorithms. Second, the training signal is
+structured: a model must learn not only which local labels are
+plausible, but also which joint configurations are globally
+consistent. Both challenges are addressed by probabilistic
+graphical models such as Markov Networks, which factorize the
+score over local terms tied to the structure of the output.
+
+In recent years, deep neural networks have become the dominant
+approach for learning rich representations from raw inputs such
+as images. Their predictions, however, are local and do not by
+default enforce global constraints. A natural direction is
+therefore to combine neural feature extractors with structured
+output layers --- a neuro-symbolic architecture in which a neural
+network proposes local evidence and a Markov Network aggregates
+that evidence under combinatorial constraints.
+SATNet~\cite{wang2019satnet} is one well-known instance of this
+idea, replacing the Markov Network with a differentiable MAXSAT
+solver.
+
+This thesis investigates such a neuro-symbolic combination and
+applies it to the task of solving Sudoku puzzles from both
+symbolic and visual inputs. Sudoku is an appealing benchmark for
+three reasons. Its constraint structure is fixed and
+well-understood, so the contribution of the structured decision
+layer can be isolated cleanly. Its solution is unique, so the
+evaluation signal is unambiguous. And its visual variant
+introduces a perceptual component (handwritten-digit recognition)
+that must be learned jointly with the reasoning component,
+making it a natural testbed for joint training of neural features
+and structured output layers.
+
+\section{Problem Statement}
+
+The goal of this thesis is to design, implement, and evaluate a method
+for training a Sudoku puzzle solver from examples of puzzle assignments
+and their corresponding solutions. The solver must support two input
+modalities: \emph{symbolic} grids, in which cells contain numerical
+digits, and \emph{visual} grids, in which cells contain images of
+handwritten digits, provided as 81 per-cell images.
+
+Formally, the predictor maps an input $x$ to a configuration
+$y = (y_1, \ldots, y_N)$ of cell values that is consistent with the
+puzzle's row, column, and box constraints. The core of the predictor
+is a neural network whose final decision layer is a Markov Network.
+The method is exercised on two graph families:
+\begin{itemize}
+    \item \textbf{Chain structure.} The output is modeled as a linear
+    chain. This variant is used for a Hidden-Markov-Chain (HMC)
+    benchmark on which MAP inference is exact (Viterbi,
+    $O(T K^{2})$), so the LP-relaxed learning loss (LP-M3N) can be
+    compared head-to-head against exact max-margin training and the
+    relaxation tightness can be measured empirically.
+    \item \textbf{General-graph structure.} The output is modeled as a
+    factor graph encoding Sudoku row, column, and box constraints. MAP
+    inference is approximated by Belief Propagation.
+\end{itemize}
+
+Learning is cast in the max-margin structured-prediction framework. To
+make training tractable on the cyclic Sudoku graph, the
+structured-hinge loss is replaced by a linear-programming relaxation
+following Franc \& Yermakov~\cite{franc2021} and
+Franc, Pr\r{u}\v{s}a \& Yermakov~\cite{franc2022}. The relaxation is
+derived in detail in Section~\ref{subsec:lp-m3n}.
+
+The proposed system is compared against a two-stage baseline --- a
+single-digit OCR classifier followed by a hard-coded Sudoku solver ---
+using per-cell Hamming and per-puzzle $0/1$ losses
+(Section~\ref{subsec:loss-functions}). This baseline separates
+perception from reasoning and provides a reference point for measuring
+the benefit of joint learning.
+
+\section{Contributions of the Thesis}
+
+The contributions of this thesis are:
+\begin{enumerate}
+    \item \textbf{Predictor design.} A neuro-symbolic predictor
+    coupling a neural backbone with a Markov Network decision
+    layer. The architecture handles both symbolic (per-cell
+    one-hot) and visual (per-cell MNIST image) inputs, and
+    supports both chain and general-graph output structures with
+    no method-level changes between them.
+    \item \textbf{Learning and inference.} An implementation of
+    max-margin learning for the proposed predictor. Chain
+    structures use exact dynamic programming (Viterbi) for
+    loss-augmented inference; general graphs use the LP-relaxed
+    M3N loss (LP-M3N), which avoids any inference oracle during
+    training. At test time, decoding uses Viterbi on chains and
+    Belief Propagation on general graphs.
+    \item \textbf{Software library.} The Python library
+    \texttt{mnlearn}, in which architecture, data paths,
+    training hyperparameters, and the choice between
+    structured-hinge and LP-M3N training are all specified via
+    YAML. The library reuses standard PyTorch backbones and is
+    organized so that every reported figure can be reproduced
+    from a single \texttt{config.yaml} artifact written next to
+    its run.
+    \item \textbf{Benchmark.} A benchmark dataset covering two
+    tasks (Sudoku and HMC) and two input modalities (symbolic
+    and visual). Each task has $30{,}000\,/\,10{,}000\,/\,10{,}000$
+    examples (train / val / test); visual variants are rendered
+    from MNIST digits.
+    \item \textbf{Empirical evaluation.} A statistical evaluation
+    comparing the proposed predictor against the two-stage
+    OCR + solver baseline using per-cell Hamming and per-puzzle
+    $0/1$ losses. Learning curves are reported as a function of
+    training-set size $N$, and a tightness check on the chain
+    benchmark validates the LP-relaxed learning loss against
+    exact structured-hinge training.
+\end{enumerate}
+
+\section{Structure of the Thesis}
+
+The rest of the thesis is organized as follows:
+\begin{itemize}
+    \item \textbf{Chapter~\ref{chap:background} -- Theoretical
+    Background.} Reviews structured prediction and the evaluation
+    losses; Markov Networks and their factorization; MAP inference
+    via Viterbi on chains and via LP relaxation on cyclic graphs;
+    max-margin learning with the LP-relaxed surrogate; and neural
+    feature extractors as unary providers.
+    \item \textbf{Chapter~\ref{chap:datasets} -- Datasets.}
+    Introduces the Sudoku and HMC datasets, detailing data
+    generation, train/val/test splits, and dataset statistics for
+    both symbolic and visual variants. The visual variants render
+    MNIST digits from disjoint per-split pools to prevent image
+    leakage.
+    \item \textbf{Chapter~\ref{chap:method} -- Method.} Presents
+    the proposed architecture (a neural backbone with a Markov
+    Network decision layer), the two training paths
+    (structured-hinge for chains, LP-relaxed M3N for general
+    graphs), the evaluation-time inference decoders, the two-stage
+    OCR baseline, and the configuration-driven Python library that
+    implements them.
+    \item \textbf{Chapter~\ref{chap:experiments} -- Experiments
+    and Results.} Reports two experimental tracks: a tightness
+    validation on the HMC chain benchmark (where LP-M3N is compared
+    against exact structured-hinge training) and the main visual
+    Sudoku results (compared against the two-stage OCR + solver
+    baseline). Discusses findings, limitations, and failure modes.
+    \item \textbf{Chapter~\ref{chap:conclusion} -- Conclusion.}
+    Summarizes the contributions and outlines directions for future
+    work.
+\end{itemize}
