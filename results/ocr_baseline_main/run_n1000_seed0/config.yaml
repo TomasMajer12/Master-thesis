@@ -1,0 +1,76 @@
+experiment:
+  name: ocr_baseline_main/run_n1000_seed0
+  seed: 0
+  device: auto
+  output_dir: results/ocr_baseline_main/run_n1000_seed0
+architecture:
+  num_classes: 9
+  backbone:
+    type: config
+    layers:
+    - type: conv2d
+      in_channels: 1
+      out_channels: 6
+      kernel_size: 5
+      padding: 2
+    - type: relu
+    - type: maxpool2d
+      kernel_size: 2
+    - type: conv2d
+      in_channels: 6
+      out_channels: 16
+      kernel_size: 5
+    - type: relu
+    - type: maxpool2d
+      kernel_size: 2
+    - type: conv2d
+      in_channels: 16
+      out_channels: 120
+      kernel_size: 5
+    - type: relu
+    - type: flatten
+      start_dim: 1
+    - type: linear
+      in_features: 120
+      out_features: 84
+    - type: relu
+    - type: linear
+      in_features: 84
+      out_features: 9
+    name: null
+    pretrained: false
+    freeze: false
+    feature_dim: null
+data:
+  task: sudoku
+  mode: visual
+  paths:
+    benchmark: benchmarks/sudoku
+    mnist: mnist_data
+  train_size: 1000
+  val_size: 10000
+  test_size: 10000
+  batch_size: 64
+training:
+  loss: cross_entropy
+  optimizer:
+    type: adam
+    lr: 0.001
+    weight_decay: 0.0001
+    weight_decay_phi: 0.0
+    phi_init_std: 0.0
+    lr_phi: 0.0
+    lr_pairwise: 0.0
+  num_epochs: 200
+  scheduler:
+    type: lambda
+    params:
+      offset: 100
+  eval_every: 2
+  early_stopping:
+    monitor: val_error
+    patience: 15
+    min_delta: 0.0
+logging:
+  verbose: true
+  print_metrics: null

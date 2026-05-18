@@ -1,0 +1,66 @@
+experiment:
+  name: sudoku_sym_tightness/n_sweep_n500_wd0.001_seed2
+  seed: 2
+  device: auto
+  output_dir: results/sudoku_sym_tightness/n_sweep_n500_wd0.001_seed2
+architecture:
+  num_classes: 9
+  backbone:
+    type: config
+    layers:
+    - type: linear
+      in_features: 9
+      out_features: 9
+    - type: Softmax
+      dim: 1
+    name: null
+    pretrained: false
+    freeze: false
+    feature_dim: null
+  graph:
+    type: sudoku
+    seq_len: null
+    path: null
+    edges: null
+  pairwise:
+    init_scale: 0.1
+data:
+  task: sudoku
+  mode: symbolic
+  paths:
+    benchmark: benchmarks/sudoku
+  train_size: 500
+  val_size: 10000
+  test_size: 10000
+  batch_size: 64
+training:
+  loss: lp_m3n
+  inference:
+    train: lp
+    eval: bp
+    params:
+      bp_iters: 50
+  optimizer:
+    type: adam
+    lr: 0.01
+    weight_decay: 0.001
+    weight_decay_phi: 0.0
+    phi_init_std: 0.0
+    lr_phi: 0.0
+  num_epochs: 500
+  scheduler:
+    type: lambda
+    params:
+      offset: 100
+  eval_every: 5
+  early_stopping:
+    monitor: val_metrics.zero_one
+    patience: 20
+    min_delta: 0.0
+logging:
+  verbose: true
+  print_metrics:
+  - train_loss
+  - val_metrics.hamming
+  - val_metrics.zero_one
+  - diagnostics.phi_norm
