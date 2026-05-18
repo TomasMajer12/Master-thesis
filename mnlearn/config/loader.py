@@ -179,6 +179,7 @@ def _optimizer(d: dict) -> OptimizerCfg:
         weight_decay_phi = float(d.get("weight_decay_phi", 0.0)),
         phi_init_std     = float(d.get("phi_init_std", 0.0)),
         lr_phi           = float(d.get("lr_phi", 0.0)),
+        lr_pairwise      = float(d.get("lr_pairwise", 0.0)),
     )
 
 

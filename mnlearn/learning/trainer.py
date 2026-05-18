@@ -154,25 +154,32 @@ class Trainer:
         return bank
 
     def _build_optimizer(self) -> optim.Optimizer:
-        """Build the optimizer with one param group per loss kind.
+        """Build the optimizer with one param group per role.
 
-        For ``m3n_hinge``: a single group containing the model
-        parameters (``lr``, ``weight_decay``).
+        Group layout (model is split so each piece gets its own lr):
+            [0]  backbone (CNN / linear) -- ``lr``, ``weight_decay``
+            [1]  pairwise W              -- ``lr_pairwise``, ``weight_decay``
+            [2]  phi bank (lp_m3n only)  -- ``lr_phi``, ``weight_decay_phi``
 
-        For ``lp_m3n``: two groups — model (``lr``, ``weight_decay``)
-        and the phi bank (``lr_phi``, ``weight_decay_phi``). Each
-        group's ``lr`` is set explicitly so the LR scheduler picks up
-        the right per-group ``base_lr`` at construction time; the two
-        learning rates then decay in lockstep.
+        Sentinel values 0.0 for ``lr_pairwise`` / ``lr_phi`` mean
+        "same as ``lr``". All groups' ``lr`` are set explicitly so the
+        LR scheduler picks up the right per-group ``base_lr`` at
+        construction time; they then decay in lockstep.
         """
         opt_cfg = self.cfg.optimizer
-        groups: list[dict[str, Any]] = [{
-            "params":       list(self.model.parameters()),
-            "weight_decay": opt_cfg.weight_decay,
-            "lr":           opt_cfg.lr,
-        }]
+
+        # Split the model into backbone vs pairwise W so each can have
+        # its own learning rate. The CNN typically converges faster than
+        # W at low N; lr_pairwise > lr_model rebalances the training.
+        pairwise_param  = self.model.pairwise
+        backbone_params = [p for p in self.model.parameters() if p is not pairwise_param]
+        pairwise_lr     = opt_cfg.lr_pairwise if opt_cfg.lr_pairwise > 0 else opt_cfg.lr
+
+        groups: list[dict[str, Any]] = [
+            {"params": backbone_params,   "weight_decay": opt_cfg.weight_decay, "lr": opt_cfg.lr},
+            {"params": [pairwise_param],  "weight_decay": opt_cfg.weight_decay, "lr": pairwise_lr},
+        ]
         if self.loss_kind == "lp_m3n":
-            # Sentinel: lr_phi=0.0 means "same as lr_model".
             phi_lr = opt_cfg.lr_phi if opt_cfg.lr_phi > 0 else opt_cfg.lr
             groups.append({
                 "params":       self.phi_bank,
@@ -332,6 +339,7 @@ class Trainer:
             "epoch":              [],
             "epoch_seconds":      [],
             "lr":                 [],
+            "lr_pairwise":        [],
             "lr_phi":             [],
             "train_loss":         [],
             "train_metrics":      [],
@@ -364,16 +372,18 @@ class Trainer:
                 train_m = self.metrics(train_x, train_y)
                 val_m   = self.metrics(val_x,   val_y)
                 diag    = self.diagnostics()
-                # Log both param groups' lr's. Group 0 is always the model;
-                # group 1 (if present) is the phi bank for lp_m3n. For
-                # m3n_hinge there is no phi group, so lr_phi is None 
+                # Log all param groups' lr's. Group 0 is backbone, group 1
+                # is pairwise W, group 2 (lp_m3n only) is the phi bank. For
+                # m3n_hinge there is no phi group, so lr_phi is None.
                 groups = self.optimizer.param_groups
-                cur_lr     = groups[0]["lr"]
-                cur_lr_phi = groups[1]["lr"] if len(groups) > 1 else None
+                cur_lr          = groups[0]["lr"]
+                cur_lr_pairwise = groups[1]["lr"]
+                cur_lr_phi      = groups[2]["lr"] if len(groups) > 2 else None
 
                 history["epoch"].append(epoch + 1)
                 history["epoch_seconds"].append(epoch_seconds)
                 history["lr"].append(cur_lr)
+                history["lr_pairwise"].append(cur_lr_pairwise)
                 history["lr_phi"].append(cur_lr_phi)
                 history["train_loss"].append(epoch_loss)
                 history["train_metrics"].append(train_m)

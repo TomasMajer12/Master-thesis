@@ -79,6 +79,11 @@ class OptimizerCfg:
     # Separate learning rate for the per-example phi variables. With
     # joint gradient descent on (model, phi)
     lr_phi: float = 0.0
+    # Separate learning rate for the pairwise M3N matrix W. Sentinel
+    # 0.0 means "same as lr_model"; >0 gives the pairwise a distinct
+    # learning rate to compensate for CNN-vs-W training asymmetry at
+    # low N (CNN converges faster, leaving W under-trained).
+    lr_pairwise: float = 0.0
 
 
 @dataclass(frozen=True)
