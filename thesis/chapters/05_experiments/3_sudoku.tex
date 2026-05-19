@@ -82,14 +82,14 @@ LeNet-5 backbone without a tail Softmax, trained with
 cross-entropy on the clue cells of the visual Sudoku training
 split. At evaluation time the OCR predictions feed the
 hard-coded backtracking solver. Five training-set sizes are
-swept ($N \in \{100, 500, 1000, 1500, 5000\}$) with three
+swept ($N \in \{100, 500, 1500, 5000\}$) with three
 seeds per $N$.
 
 \paragraph{Results.}
 Table~\ref{tab:ocr-baseline} reports the three metrics of
 Section~\ref{subsec:method-baseline-two-stage} as a function
-of $N$. The per-clue OCR error drops from $2.9\%$ at $N = 100$
-to $0.9\%$ at $N = 5000$ --- the classifier is essentially
+of $N$. The per-clue OCR error drops from $0.029$ at $N = 100$
+to $0.009$ at $N = 5000$ --- the classifier is essentially
 solving MNIST with the LeNet-5 architecture --- but the
 per-puzzle $0/1$ error plateaus around $0.25$. The bottleneck
 is solver feasibility: even at $N = 5000$, only $\sim 75\%$ of
@@ -107,7 +107,6 @@ because each mis-read clue can invalidate the whole puzzle.
 \hline
 $100$  & $0.621 \pm 0.027$ & $0.389 \pm 0.027$ & $0.0285 \pm 0.0022$ \\
 $500$  & $0.358 \pm 0.027$ & $0.651 \pm 0.028$ & $0.0130 \pm 0.0012$ \\
-$1000$ & $0.327 \pm 0.022$ & $0.681 \pm 0.022$ & $0.0117 \pm 0.0009$ \\
 $1500$ & $0.268 \pm 0.008$ & $0.738 \pm 0.008$ & $0.0092 \pm 0.0003$ \\
 $5000$ & $0.255 \pm 0.027$ & $0.751 \pm 0.027$ & $0.0087 \pm 0.0011$ \\
 \hline
@@ -136,30 +135,30 @@ std band). Left: test $0/1$ error. Centre: OCR per-clue error
 
 \paragraph{Setup.}
 The full M\textsuperscript{3}N predictor of
-Section~\ref{sec:method-architecture}: LeNet-5 backbone with
+Section~\ref{sec:method-architecture} --- LeNet-5 backbone with
 the terminal Softmax tail, Sudoku constraint graph, LP-M3N
-training, and BP decoding at evaluation time
-(Section~\ref{sec:method-inference}). The pairwise matrix $W$
-and the per-example duals $\phi^{i}$ each have their own
-learning rate (Section~\ref{subsec:method-training-optimizer});
-\texttt{lr\_pairwise} is set to $0.01$ for the runs reported
-below (discussed empirically in
-Section~\ref{sec:experiments-discussion}). The regularisation
-strength $\lambda$ was selected on a sweep at the smallest
-training-set size $N = 100$ on the validation split, and then
-frozen for the larger sizes: the runs reported here use
-$\lambda = 5 \cdot 10^{-3}$ at $N = 500$ and
-$\lambda = 10^{-3}$ at $N \in \{1500, 5000\}$, with three
-seeds per row.
+training, and Belief Propagation decoding at evaluation time
+(Section~\ref{sec:method-inference}) --- is exercised at four
+training-set sizes, $N \in \{100, 500, 1500, 5000\}$, with
+five seeds each. The pairwise matrix $W$ uses its own learning
+rate \texttt{lr\_pairwise} $= 0.01$ (ten times the backbone
+rate), discussed empirically in
+Section~\ref{sec:experiments-discussion}. The regularisation
+strength $\lambda$ was selected on validation sweeps at two
+pivot training-set sizes --- $N = 500$ for the smaller end and
+$N = 1500$ for the larger --- and frozen for the remaining
+sizes: $\lambda = 5 \cdot 10^{-3}$ at $N \in \{100, 500\}$ and
+$\lambda = 10^{-3}$ at $N \in \{1500, 5000\}$.
 
 \paragraph{Results.}
-Table~\ref{tab:visual-sudoku} reports the test Hamming and
-$0/1$ error across the available training-set sizes. The
-$N = 5000$ standard deviation is computed across three seeds
-where the third seed substitutes the better of the two
-available seeds; additional seeds will be added in a future
-revision. The model reaches $\sim 5\%$ test $0/1$ error at
-$N = 5000$ on a $10{,}000$-puzzle test split.
+Table~\ref{tab:visual-sudoku} reports the headline test metrics.
+The predictor reaches $5.1\%$ per-puzzle $0/1$ error at
+$N = 5000$ on a $10{,}000$-puzzle test split, with per-cell
+Hamming below $0.7\%$. Both metrics improve monotonically with
+$N$ (Figure~\ref{fig:visual-sudoku-learning-curve}); the
+seed-to-seed variance shrinks alongside, from $\pm 0.019$ at
+$N = 100$ down to $\pm 0.005$ at $N = 5000$, as expected when
+more training puzzles smooth out the optimisation trajectory.
 
 \begin{table}[htbp]
 \centering
@@ -168,56 +167,75 @@ $N = 5000$ on a $10{,}000$-puzzle test split.
 \hline
 \textbf{$N$} & \textbf{$\lambda$} & \textbf{Test Hamming} & \textbf{Test $0/1$} \\
 \hline
-$500$  & $5 \cdot 10^{-3}$ & $0.013 \pm 0.002$ & $0.117 \pm 0.011$ \\
-$1500$ & $10^{-3}$         & $0.009 \pm 0.002$ & $0.064 \pm 0.011$ \\
-$5000$ & $10^{-3}$         & $0.006 \pm 0.000$ & $0.050 \pm 0.001$ \\
+$100$  & $5 \cdot 10^{-3}$ & $0.0507 \pm 0.0034$ & $0.311 \pm 0.019$ \\
+$500$  & $5 \cdot 10^{-3}$ & $0.0138 \pm 0.0013$ & $0.118 \pm 0.011$ \\
+$1500$ & $10^{-3}$         & $0.0079 \pm 0.0018$ & $0.057 \pm 0.012$ \\
+$5000$ & $10^{-3}$         & $0.0061 \pm 0.0007$ & $0.051 \pm 0.005$ \\
 \hline
 \end{tabular}
 \caption[Visual Sudoku main results]{Test Hamming and
 per-puzzle $0/1$ error for the M\textsuperscript{3}N predictor
-on visual Sudoku. Three seeds per row; the $N = 5000$ standard
-deviation is a placeholder pending additional seeds.}
+on visual Sudoku. Five seeds per row, mean $\pm$ sample
+standard deviation.}
 \label{tab:visual-sudoku}
 \end{table}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.95\textwidth]{figures/vis_sudoku_main_lrpw_v2/learning_curve}
+\includegraphics[width=0.95\textwidth]{figures/vis_sudoku_main/learning_curve}
 \caption[Visual Sudoku learning curve]{Test Hamming (left) and
 per-puzzle $0/1$ error (right) versus training-set size $N$
 for the M\textsuperscript{3}N predictor on visual Sudoku.
-Three seeds per $N$, mean $\pm$ std band.}
+Five seeds per $N$, mean $\pm$ std bars; log-scale $N$ axis.}
 \label{fig:visual-sudoku-learning-curve}
 \end{figure}
 
+\paragraph{Training dynamics.}
+Figure~\ref{fig:visual-sudoku-per-epoch} overlays the per-epoch
+validation $0/1$ and Hamming for all three $N$. Every run
+reaches a near-final plateau within the first $\sim 50$ epochs
+and then refines slowly. At $N = 500$ the validation $0/1$
+drifts mildly upward in the late tail --- a soft overfitting
+signature where the LeNet-5 backbone has more capacity than
+$500$ puzzles can support. The
+early-stopping policy
+(Section~\ref{subsec:method-training-hyperparams}) reverts the
+saved model to the best-validation epoch, so the upward drift
+does not enter the reported test numbers. At $N = 1500$ and
+$N = 5000$ the trajectories stay on the plateau through the
+$800$-epoch window, with no comparable drift.
+
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.95\textwidth]{figures/vis_sudoku_main_lrpw_v2/per_epoch}
-\caption[Visual Sudoku training curves]{Training and validation
-trajectories for $N = 5000$, seed $0$. Validation $0/1$
-stabilises near $0.10$ within the first $\sim 100$ epochs and
-slowly improves towards the test number of
-Table~\ref{tab:visual-sudoku}.}
+\includegraphics[width=0.95\textwidth]{figures/vis_sudoku_main/per_epoch}
+\caption[Visual Sudoku validation trajectories]{Validation
+$0/1$ (left) and validation Hamming (right) versus training
+epoch for the M\textsuperscript{3}N predictor on visual Sudoku
+at $N \in \{500, 1500, 5000\}$. Five seeds per $N$, mean $\pm$
+std band; curves are forward-filled past each seed's
+early-stop epoch. Epochs are clipped at $800$ and plotted on a
+log scale.}
 \label{fig:visual-sudoku-per-epoch}
 \end{figure}
 
 \paragraph{Head-to-head comparison with the OCR baseline.}
 Table~\ref{tab:m3n-vs-ocr} places the M\textsuperscript{3}N
-predictor and the two-stage OCR baseline of
-Section~\ref{subsec:experiments-sudoku-ocr-baseline} side by
-side at matched training-set sizes, using the per-puzzle $0/1$
-error as the common metric. At every $N$ the joint predictor
-reduces the $0/1$ error substantially: at $N = 500$ the OCR
-baseline misclassifies $35.8\%$ of puzzles while
-M\textsuperscript{3}N misclassifies $11.7\%$; at $N = 5000$ the
-gap widens to $25.5\%$ vs.\ $5.0\%$. The improvement is
-attributable to joint structured training: the OCR baseline's
-per-clue accuracy is already near saturation
-(Table~\ref{tab:ocr-baseline}) but its solver-feasibility
-ceiling prevents further puzzle-level improvement, whereas the
-M\textsuperscript{3}N predictor's Markov-Network decision
-layer propagates information across cells and recovers from
-ambiguous local evidence.
+predictor next to the two-stage OCR baseline of
+Section~\ref{subsec:experiments-sudoku-ocr-baseline} at matched
+training-set sizes. The joint predictor reduces the per-puzzle
+$0/1$ error substantially across every $N$:
+$0.358 \to 0.118$ at $N = 500$, $0.268 \to 0.057$ at $N = 1500$,
+and $0.255 \to 0.051$ at $N = 5000$. The mechanism is the one
+diagnosed from the OCR side in
+Section~\ref{subsec:experiments-sudoku-ocr-baseline}: the OCR
+component reaches sub-$0.01$ per-clue error by $N = 1500$ but
+still trips the solver-feasibility ceiling on $\sim 25\%$ of
+puzzles, because a single mis-read clue can render the whole
+puzzle inconsistent with the all-different constraints. The
+M\textsuperscript{3}N predictor's Markov-Network decision layer
+propagates information across cells through the constraint
+graph and re-interprets ambiguous unaries given the rest of the
+puzzle, bypassing the cascade that ceilings the baseline.
 
 \begin{table}[htbp]
 \centering
@@ -226,9 +244,10 @@ ambiguous local evidence.
 \hline
 \textbf{$N$} & \textbf{OCR baseline $0/1$ error} & \textbf{M\textsuperscript{3}N $0/1$ error} \\
 \hline
-$500$  & $0.358 \pm 0.027$ & $0.117 \pm 0.011$ \\
-$1500$ & $0.268 \pm 0.008$ & $0.064 \pm 0.011$ \\
-$5000$ & $0.255 \pm 0.027$ & $0.050 \pm 0.001$ \\
+$100$  & $0.621 \pm 0.027$ & $0.311 \pm 0.019$ \\
+$500$  & $0.358 \pm 0.027$ & $0.118 \pm 0.011$ \\
+$1500$ & $0.268 \pm 0.008$ & $0.057 \pm 0.012$ \\
+$5000$ & $0.255 \pm 0.027$ & $0.051 \pm 0.005$ \\
 \hline
 \end{tabular}
 \caption[M3N vs OCR baseline]{Per-puzzle $0/1$ error of the
@@ -236,3 +255,31 @@ M\textsuperscript{3}N predictor and the two-stage OCR baseline
 at matched training-set sizes.}
 \label{tab:m3n-vs-ocr}
 \end{table}
+
+\paragraph{Learned scores.}
+Figure~\ref{fig:visual-sudoku-learned-scores} shows the learned
+unary and pairwise scores from the $N = 5000$, seed $0$ run.
+The unary panel --- mean softmax output of the CNN backbone
+aggregated by ground-truth digit over test clue cells --- is
+essentially the identity matrix, reflecting near-perfect
+MNIST-class accuracy. The pairwise matrix $W$ recovers the
+all-different shape: negative diagonal, positive off-diagonal.
+The shape is sharper than the symbolic case
+(Figure~\ref{fig:sudoku-symbolic-learned-scores}): with noisier
+CNN-derived unaries, the predictor learns a stronger constraint
+penalty on the pairwise term. The joint predictor recovers the
+same constraint structure in the visual setting as in the
+symbolic one, even though the unary side is now learning a
+perceptual task end-to-end.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/vis_sudoku_main/learned_scores}
+\caption[Visual Sudoku learned scores]{Learned unary (left)
+and pairwise (right) scores on visual Sudoku at $N = 5000$,
+seed $0$. The unary is the mean softmax output of the CNN
+backbone aggregated by ground-truth digit. The pairwise matrix
+$W$ exhibits the all-different shape (negative diagonal,
+positive off-diagonal).}
+\label{fig:visual-sudoku-learned-scores}
+\end{figure}

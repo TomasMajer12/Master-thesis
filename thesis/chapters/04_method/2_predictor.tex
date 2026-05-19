@@ -20,11 +20,9 @@ class in Section~\ref{subsec:method-architecture-full}.
 
 The abstract backbone interface of
 Section~\ref{subsec:backbone-interface} is realised through the
-\texttt{ConfigBackbone} class
-(Section~\ref{subsec:method-config-backbone}): each
-architecture is declared as a list of layer specifications in
-YAML, and the per-node forward pass shares parameters across
-all nodes. Two concrete architectures are exercised in this
+\texttt{ConfigBackbone} class: each architecture is declared as a
+list of layer specifications in YAML, and the per-node forward
+pass shares parameters across all nodes. Two concrete architectures are exercised in this
 thesis: a linear-only baseline used on symbolic input data,
 and a LeNet-5 convolutional network used on every visual
 input.
@@ -40,19 +38,11 @@ sanity-check that the LeNet-5 + LP-M3N stack ought to match on
 symbolic data and beat on visual data.
 
 \paragraph{LeNet-5.}
-A convolutional stack following the modern LeNet-5 variant
-popularised in \emph{Dive into Deep Learning}~\cite{d2l-lenet}:
-three convolutional blocks (the first two each followed by
-$2\!\times\!2$ max pooling, the third operating on a
-$5\!\times\!5$ feature map and collapsing it to $1\!\times\!1$),
-followed by two fully connected layers. Differences from the
-original 1998 LeNet-5 of~\cite{LeCun1998} are ReLU activations in
-place of $\tanh$, max-pooling in place of average pooling, and
-the collapsed third convolution in place of an additional fully
-connected layer. The exact layer sequence is shown in
-Figure~\ref{fig:method-lenet5-yaml}; the only difference between
-the Sudoku ($K = 9$) and HMC ($K = 10$) variants is the output
-dimension of the final linear layer.
+The LeNet-5 variant of Section~\ref{sec:nn-features} is the
+backbone used on every visual benchmark. The exact YAML layer
+sequence is shown in Figure~\ref{fig:method-lenet5-yaml}; the only
+difference between the Sudoku ($K = 9$) and HMC ($K = 10$)
+variants is the output dimension of the final linear layer.
 
 \begin{figure}[htbp]
 \begin{verbatim}
@@ -160,8 +150,6 @@ The two pieces are composed in the \texttt{M3N} class of
 The full predictor is constructed from an
 \texttt{ArchitectureCfg} through the \texttt{build\_model}
 factory of \texttt{mnlearn.models}: the factory builds the
-backbone via \texttt{build\_backbone}
-(Section~\ref{subsec:method-config-backbone}), the edge list
-via \texttt{build\_graph}, and returns the pair
-\texttt{(M3N, edges)} ready to be moved to the training
-device.
+backbone via \texttt{build\_backbone}, the edge list via
+\texttt{build\_graph}, and returns the pair
+\texttt{(M3N, edges)} ready to be moved to the training device.

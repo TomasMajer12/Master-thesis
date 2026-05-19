@@ -1,0 +1,16 @@
+\section{Future work}
+\label{sec:conclusion-future}
+
+Several directions extend the present work. \emph{Exact
+decoding} at evaluation time --- via an integer program over
+the constraint graph --- would isolate the Belief Propagation
+gap discussed in
+Section~\ref{subsec:discussion-failure-modes}; the present BP
+decoder is fast enough for inner-loop training but its
+approximation quality on the Sudoku graph is not characterised.
+\emph{Scaling} the training-set size into the hundreds of
+thousands (the Kaggle source has $\sim 10^{6}$ puzzles
+available) would test whether the present learning curve
+flattens or continues to improve. Other \emph{graph families}
+--- text labelling CRFs, image segmentation --- would test the
+framework outside the Sudoku-specific all-different setting.

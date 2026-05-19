@@ -23,17 +23,10 @@ dispatches between them based on this single string.
 
 \paragraph{Structured hinge with Viterbi loss-augmented
 inference (\texttt{m3n\_hinge}).}
-The training loss is the margin-rescaling form of
-Section~\ref{subsec:max-margin}: for each training pair
-$(x, y)$, the loss-augmented oracle returns the
-most-violating labeling $y^{\mathrm{LA}}$, and the loss is
-\begin{equation*}
-    \Delta(x, y, w) \;=\; f(x, y^{\mathrm{LA}}) +
-    \ell(y, y^{\mathrm{LA}}) - f(x, y),
-\end{equation*}
-clamped at zero for safety, though the inner $\max$ already
-guarantees non-negativity. The oracle is exact via Viterbi on
-chains. The corresponding implementation is the
+The training loss is the margin-rescaling form
+$\Delta(x, y, w)$ of Section~\ref{subsec:max-margin}, with the
+loss-augmented oracle solved exactly on chains by Viterbi. The
+corresponding implementation is the
 \texttt{structured\_hinge\_loss} module paired with
 \texttt{loss\_augmented\_viterbi}; this path is selected by
 \texttt{loss: m3n\_hinge} together with
@@ -41,24 +34,18 @@ chains. The corresponding implementation is the
 validator rejects mismatched pairings at load time.
 
 \paragraph{LP-relaxed M\textsuperscript{3}N (\texttt{lp\_m3n}).}
-The training loss is the LP-relaxed surrogate of
-Section~\ref{subsec:lp-m3n}: each training example carries its
-own auxiliary variables $\phi^{i}$, and the loss reads
-\begin{equation*}
-    \Delta^{\mathrm{LP}}(x^{i}, y^{i}, w, \phi^{i})
-    \;=\; U(x^{i}, y^{i}, w, \phi^{i})
-    - \langle w, \psi(x^{i}, y^{i}) \rangle.
-\end{equation*}
-No inference oracle is invoked at training time --- the $\max$
-operations in $U$ are local and evaluated in closed form,
-using the bank of $\phi^{i}$ tensors described in
-Section~\ref{subsec:method-training-phi}. This is the training
-path used on the Sudoku graph; it is also exercised on chains
-in the tightness-validation experiment of
-Chapter~\ref{chap:experiments}. The corresponding
-implementation is the \texttt{lp\_m3n\_loss} module, selected
-by \texttt{loss: lp\_m3n} together with
-\texttt{inference.train: lp}.
+The training loss is the LP-relaxed surrogate
+$\Delta^{\mathrm{LP}}(x^{i}, y^{i}, w, \phi^{i})$ of
+Section~\ref{subsec:lp-m3n}, with each training example carrying
+its own auxiliary variables $\phi^{i}$ (stored in the
+$\phi$-bank of Section~\ref{subsec:method-training-phi}). No
+inference oracle is invoked at training time --- the $\max$
+operations are local and evaluated in closed form. This is the
+training path used on the Sudoku graph; it is also exercised on
+chains in the tightness-validation experiment of
+Chapter~\ref{chap:experiments}. The corresponding implementation
+is the \texttt{lp\_m3n\_loss} module, selected by
+\texttt{loss: lp\_m3n} together with \texttt{inference.train: lp}.
 
 \paragraph{Common scaffolding.}
 The remainder of the fit loop is identical for both losses.
@@ -92,9 +79,8 @@ learning rate:
 \end{itemize}
 The motivation for splitting $W$ off into its own group is the
 asymmetric training dynamics between the high-parameter-count
-backbone and the small ($K \times K$) pairwise matrix at low
-training-set size $N$, discussed empirically in
-Chapter~\ref{chap:experiments}.
+backbone and the small ($K \times K$) pairwise matrix, discussed
+empirically in Chapter~\ref{chap:experiments}.
 
 The learning rate decays through a \emph{hyperbolic} schedule
 \begin{equation}

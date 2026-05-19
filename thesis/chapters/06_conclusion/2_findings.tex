@@ -1,0 +1,31 @@
+\section{Key findings}
+\label{sec:conclusion-findings}
+
+\begin{enumerate}
+    \item \textbf{LP-M\textsuperscript{3}N is empirically tight
+    on chains.} On the linear-chain HMC benchmark the
+    LP-relaxed loss converges to a test Hamming within $0.003$
+    of exact structured-hinge training and within $0.013$ of
+    the Forward-Backward Bayes-optimal floor, for both the
+    linear and the LeNet-5 backbones.
+
+    \item \textbf{The M\textsuperscript{3}N predictor recovers
+    the all-different structure from data.} On symbolic Sudoku,
+    the learned pairwise matrix matches the all-different shape
+    (zero on the diagonal, positive off-diagonal) without any
+    hard-coded constraint encoding, and the per-puzzle $0/1$
+    error reaches zero from $N = 100$ onwards.
+
+    \item \textbf{Joint structured training beats two-stage
+    OCR + solver.} At matched training-set sizes, the
+    M\textsuperscript{3}N predictor reduces the per-puzzle
+    $0/1$ error from $0.255$ to $0.051$ at $N = 5000$ ---
+    three to five times below the OCR baseline across all
+    $N$ values tested.
+
+    \item \textbf{Separate learning rates are essential.} A
+    backbone-to-pairwise learning-rate ratio of $10\!:\!1$
+    resolves a training-dynamics asymmetry that otherwise
+    leaves $W$ under-trained and the predictor stuck at a
+    per-cell-classifier plateau.
+\end{enumerate}

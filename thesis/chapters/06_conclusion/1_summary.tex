@@ -1,0 +1,20 @@
+\section{Summary}
+\label{sec:conclusion-summary}
+
+This thesis presented a method for training a Sudoku solver
+from examples of puzzle--solution pairs, supporting both
+symbolic and visual input modalities. The predictor couples a
+neural backbone --- a linear baseline for symbolic inputs,
+LeNet-5 for visual inputs --- with a Markov Network decision
+layer that scores complete labellings under the Sudoku
+constraint graph. Training uses the LP-relaxed max-margin
+(LP-M\textsuperscript{3}N) loss of
+Franc \& Yermakov~\cite{franc2021}, which avoids any inference
+oracle at training time by introducing per-example dual
+variables. Inference at evaluation time uses Viterbi on chain
+graphs and loopy max-sum Belief Propagation on the Sudoku
+graph. The pipeline is implemented in the \texttt{mnlearn}
+Python library, with every experimental decision driven by a
+single YAML artifact that round-trips through the loader, and
+is exercised on a benchmark covering two tasks (Sudoku, HMC)
+and two input modalities.

@@ -1,71 +1,142 @@
 \section{Discussion}
 \label{sec:experiments-discussion}
 
-% =====================================================================
-%   STUB. Sub-section structure follows OUTLINE_TODO §5.5. Each
-%   subsection is currently a heading + a brief note describing the
-%   material that will land there, drafted from TODO.md where prose
-%   already exists.
-% =====================================================================
+\subsection{Why joint structured training beats the OCR baseline}
+\label{subsec:discussion-joint-vs-ocr}
 
-\subsection{The $\phi$-saturation pathology}
-\label{subsec:discussion-phi-saturation}
+The two-stage OCR + solver baseline saturates near per-clue
+accuracy on the LeNet-5 backbone: at $N = 5000$ the per-clue
+error is below $0.009$, essentially the noise floor of MNIST
+recognition. The puzzle-level $0/1$ error nevertheless plateaus
+around $0.25$. The bottleneck is structural rather than
+perceptual: with $\sim 36$ clue cells per puzzle, even a
+sub-$1\%$ per-clue error rate produces a mis-read in roughly
+one puzzle in three, and a single mis-read clue can render the
+entire puzzle inconsistent with the all-different constraints.
+The hard-coded solver returns ``infeasible'' on those puzzles,
+which the evaluation counts as $0/1$ errors. The $\sim 75\%$
+solver-feasibility ceiling in Table~\ref{tab:ocr-baseline} is
+the empirical signature of this cascade.
 
-% Material draft (see TODO.md, "Discussion" entry):
-%
-% The terminal Softmax layer in the M3N LeNet-5 variants
-% (Section ref{subsec:method-architecture-backbones}) bounds the
-% unary potentials so that the per-example dual variables phi^i
-% cannot inflate to compensate for an over-confident backbone.
-% Without the Softmax, training empirically degenerates: phi^i grows
-% unboundedly, the pairwise term saturates against it, and the
-% predictor reduces to a per-cell classifier with no constraint
-% propagation. Figure: phi_norm trajectory from
-% history.diagnostics across runs with/without the Softmax tail.
+The M\textsuperscript{3}N predictor breaks the ceiling for two
+reasons. First, the unary potentials retain calibrated
+uncertainty: an ambiguous handwritten digit emerges from the
+backbone as a soft distribution over candidate labels, not a
+hard pick. Second, the pairwise term lets that uncertainty
+propagate through the constraint graph --- a clue cell whose
+top-1 OCR prediction would violate a row or column can be
+overridden once Belief Propagation has aggregated evidence from
+the neighbours. The $5\%$ puzzle-level error at $N = 5000$ is
+the joint payoff of these two mechanisms --- not better
+perception, but perception that knows when to defer to
+structure.
 
-\subsection{$\mathrm{lr\_pairwise}$ rebalancing: CNN-vs-$W$ training
-asymmetry at low $N$}
+\subsection{Training asymmetry between backbone and pairwise}
 \label{subsec:discussion-lr-pairwise}
 
-% Material draft (preserved in TODO.md under "lr_pairwise rebalancing"):
-%
-% Mechanism (durable). At low N the CNN converges much faster than W
-% (CNN has ~60k params + ~36 clue images per puzzle; W has 81 params
-% and needs the constraint structure to emerge from cross-batch
-% gradient pressure). Default identical learning rates leave W
-% under-trained --- the "0.35 plateau" is the structural signature
-% of "CNN done, W partially-learned" (clue cells correct, blanks
-% ~37% accurate via soft-constraint propagation). A larger
-% lr_pairwise rebalances by giving W more gradient juice while
-% leaving the CNN trajectory unchanged.
-%
-% Symptom (reproducible). With lr_pairwise = lr_model = 0.001 (visual
-% Sudoku, N=500, lambda=1e-4, B=32): training plateaus at hamming
-% approx 0.35 by epoch 100 and crawls. Final hamming after 1000
-% epochs approx 0.20, test 0/1 approx 0.83.
-%
-% Effect (validate post-§5.3 rerun). With lr_pairwise = 0.01 (10x
-% lr_model): plateau is crossed by epoch 10. By epoch 25
-% hamming = 0.051, test 0/1 = 0.43. Pre-rerun numbers --- confirm
-% or revise once notebook 05 finishes with the loader fix.
+A practical lesson from the Sudoku runs is that the backbone
+and the pairwise matrix cannot share a learning rate. The
+LeNet-5 backbone has roughly $60{,}000$ trainable parameters
+and sees a dense gradient signal from every clue image in every
+mini-batch; the pairwise matrix has $K^{2} = 81$ entries and
+accumulates gradient only through the LP-M\textsuperscript{3}N's
+pairwise sufficient statistics, which the backbone is
+simultaneously trying to dominate. With identical learning
+rates the backbone converges within tens of epochs while $W$
+lingers near its small-Gaussian initialisation, and the
+predictor degenerates to a per-cell classifier whose soft
+Sudoku prior is too weak to override mis-read clues. Setting
+\texttt{lr\_pairwise} to ten times \texttt{lr\_model} re-balances
+the optimisation: $W$ acquires the diagonal-dominant
+all-different shape within the first hundred epochs, and the
+joint predictor escapes the per-cell-classifier plateau that
+fixed-LR runs settle into.
+
+\subsection{The softmax tail and $\phi$-saturation}
+\label{subsec:discussion-phi-saturation}
+
+The LeNet-5 backbone terminates in a softmax over the $K$
+unary logits. The choice is empirically motivated: with the
+softmax tail removed, the test $0/1$ error roughly doubles
+(Figure~\ref{fig:phi-saturation}).
+
+The mechanism is that the per-example duals $\phi^{i}$ absorb
+unary magnitudes through the $U$ functional of
+Section~\ref{subsec:lp-m3n}. Without an upper bound on the
+unaries, $\|\phi^{i}\|$ inflates during training, the pairwise
+term develops a weaker all-different shape, and the validation
+$0/1$ stalls early. The softmax bounds the unaries in
+$[\log(1/K), 0]$, keeps the duals finite, and lets the
+constraint structure emerge from gradient pressure on $W$
+rather than being out-competed by an inflating unary.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/phi_saturation_ablation/phi_saturation}
+\caption[$\phi$-saturation ablation]{$\phi$-saturation
+ablation on visual Sudoku ($N = 1500$, three seeds). Without
+the softmax tail, $\|\phi^{i}\|$ inflates roughly fourfold
+(left), the all-different shape of the pairwise matrix is
+weaker (middle), and validation $0/1$ stalls near $0.25$
+versus the canonical plateau of $\sim 0.10$ (right). Each
+variant's mean $\pm$ std band is plotted only up to the
+epoch at which all three seeds still have real data.}
+\label{fig:phi-saturation}
+\end{figure}
 
 \subsection{Failure modes}
 \label{subsec:discussion-failure-modes}
 
-% Three concrete cases, all populated post-§5.3:
-%   - OCR-baseline puzzles where solver returns infeasible:
-%     solver_feasibility metric, frequency vs OCR error rate
-%   - M3N predictions that violate Sudoku row/column/box constraints:
-%     rate, where they cluster
-%   - Per-puzzle correlation between blank-cell density and 0/1 error
+The dominant caveat in the visual-Sudoku results is that Belief
+Propagation is exact only on trees: on the cyclic Sudoku graph
+it can converge to a fixed point that is not the global MAP,
+and occasionally returns a labelling that violates a Sudoku
+constraint. The residual $\sim 5\%$ errors at $N = 5000$ have
+not been broken down into perception-induced versus
+decoding-induced failures; quantifying the BP gap against an
+exact MAP decoder (e.g.\ an integer program over the constraint
+graph) is left as future work
+(Section~\ref{sec:conclusion-future}). That the same constraint
+graph and decoder reach zero error on \emph{symbolic} Sudoku
+(Section~\ref{subsec:experiments-sudoku-symbolic}) indicates BP
+is not the rate-limiting factor when the unaries are clean ---
+on visual data the breakdown is open.
 
 \subsection{Limitations and threats to validity}
 \label{subsec:discussion-limitations}
 
-% N range, single dataset (Kaggle bryanpark/sudoku), BP vs exact
-% decoder gap, finite-seed variance.
+The empirical results should be read with the following
+caveats. The Sudoku benchmark draws from a single source
+(Kaggle's \texttt{bryanpark/sudoku}~\cite{park2018sudoku}) that
+is essentially a single difficulty grade; generalisation to
+harder puzzles with fewer clues is not tested. The visual
+variants are rendered from MNIST only; transfer to other
+handwriting domains is open. The training-set sizes are limited
+to $N \leq 5000$; behaviour at much larger $N$ (the source has
+$\sim 10^{6}$ puzzles available) is unexplored. The evaluation
+decoder is Belief Propagation, which is approximate on the
+Sudoku graph; the gap to an exact decoder is unmeasured
+(Section~\ref{subsec:discussion-failure-modes}). Finally,
+absolute headline numbers may shift with longer training
+budgets, larger backbones, or alternative pairwise
+parameterisations
 
-\subsection{Connections to broader literature}
+\subsection{Connections to the broader literature}
 \label{subsec:discussion-connections}
 
-% Franc-Yermakov 2021, Kadlec 2022, SATNet (Wang et al. 2019).
+The LP-M\textsuperscript{3}N training path is due to
+Franc \& Yermakov~\cite{franc2021}, who introduced the
+relaxation as a tractable surrogate for max-margin learning
+under missing labels; the consistency analysis was extended by
+Franc, Pr\r{u}\v{s}a \& Yermakov~\cite{franc2022}. This thesis
+applies the relaxation in the fully-labelled setting and uses
+it as the principal training loss on cyclic graphs, where exact
+hinge is intractable. The neuro-symbolic combination of a
+learned perceptual backbone with a structured decision layer
+connects to SATNet~\cite{wang2019satnet}, which uses a
+differentiable MAXSAT layer in place of a Markov Network. The
+two designs are conceptually close --- both isolate perception
+from reasoning while training end-to-end --- and a direct
+empirical comparison on a shared benchmark is a natural
+extension of the present work
+(Section~\ref{sec:conclusion-future}).

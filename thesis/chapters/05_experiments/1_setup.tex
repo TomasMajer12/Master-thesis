@@ -26,12 +26,10 @@ builder (Chapter~\ref{chap:datasets}) and shared across all
 seeds; only the optimisation seed varies.
 
 \paragraph{Metrics.}
-The two evaluation losses defined in
-Section~\ref{subsec:loss-functions} are reported in every
-table: the per-cell normalised Hamming loss
-$L_H^{\mathrm{norm}}(y, \hat{y}) \in [0, 1]$ and the per-puzzle
-$0/1$ loss $L_{0/1}(y, \hat{y}) \in \{0, 1\}$. Both are averaged
-over the test split.
+Both evaluation losses of
+Section~\ref{subsec:loss-functions} --- the per-cell normalised
+Hamming loss and the per-puzzle $0/1$ loss --- are reported on
+the test split.
 
 \paragraph{Hyperparameter selection.}
 For each experiment, the regularisation strength $\lambda$

@@ -26,14 +26,11 @@ Section~\ref{subsec:viterbi}, implemented in
 \label{subsec:method-inference-cyclic}
 
 On the Sudoku constraint graph, MAP is NP-hard
-(Section~\ref{sec:map-inference}) and the dynamic-programming
-factorisation of Section~\ref{subsec:viterbi} no longer applies.
-The decoder used in this thesis is the loopy max-sum Belief
-Propagation algorithm of
+(Section~\ref{sec:map-inference}). The decoder used in this
+thesis is the loopy max-sum Belief Propagation algorithm of
 Section~\ref{subsec:belief-propagation}, implemented in
-\texttt{mnlearn.inference.bp\_decode}. Messages are
-re-normalised by subtracting the per-edge maximum after each
-update for numerical stability. The number of message-passing
-iterations is a YAML knob
-(\texttt{inference.params.bp\_iters}, default $50$); the
-decoder is selected by \texttt{inference.eval: bp}.
+\texttt{mnlearn.inference.bp\_decode} with messages re-normalised
+by subtracting the per-edge maximum after each update for
+numerical stability. The number of message-passing iterations is
+a YAML knob (\texttt{inference.params.bp\_iters}, default $50$);
+the decoder is selected by \texttt{inference.eval: bp}.
