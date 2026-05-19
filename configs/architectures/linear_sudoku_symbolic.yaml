@@ -1,14 +1,4 @@
-# Linear backbone for symbolic Sudoku (§5.3 sanity / notebook 03).
-#
-# Per-cell input is the K=9 one-hot encoding of the clue digit (zero
-# vector at blank cells). A single Linear(9, 9) maps it to per-cell
-# unary potentials, which a terminal Softmax(dim=1) bounds in [0, 1]
-# (LP-M3N φ-saturation mitigation — see Kadlec 2022 §3.4).
-#
-# Combined with the Sudoku constraint graph (810 edges across rows,
-# columns, and 3×3 boxes) and a learned pairwise matrix W, this is the
-# minimal LP-M3N predictor that should still converge to (near) the
-# hard-coded-solver floor on the perfectly clued symbolic data.
+# Linear backbone for symbolic Sudoku
 
 num_classes: 9
 

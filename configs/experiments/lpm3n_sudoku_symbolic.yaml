@@ -1,18 +1,4 @@
-# LP-M3N on symbolic Sudoku (notebook 03; §5.3 sanity check).
-#
-# Symbolic data — per-cell one-hot input — paired with the Sudoku
-# constraint graph (810 edges across rows, columns, and 3×3 boxes).
-# The LP relaxation is not tight on cyclic graphs, so LP-M3N is the
-# only available trainer: structured-hinge would need Viterbi
-# loss-augmented inference, and Viterbi is chain-only.
-#
-# Notebook 03 overrides training.optimizer.weight_decay (the λ sweep)
-# and data.{train,val,test}_size per run; this YAML sets defaults.
-#
-# Per-cell architecture is one Linear(9, 9) + Softmax — minimal
-# backbone. The pairwise matrix W does the heavy lifting (encoding
-# the "y_u != y_v on every edge" Sudoku constraint).
-
+# LP-M3N on symbolic Sudoku
 experiment:
   name:   sudoku_sym_lp_m3n
   seed:   42
@@ -42,11 +28,7 @@ training:
     weight_decay:     0.001       # gauge-pinning; overridden by sweep
     weight_decay_phi: 0.0
     phi_init_std:     0.0
-    lr_phi:           0.0         # sentinel: same as lr (= 0.01).
-                                  # Symbolic chain HMC worked at sentinel
-                                  # (lr=0.01); start there. With one Linear(9,9)
-                                  # layer, the model has only ~90 params, so
-                                  # the asymmetric update frequency is mild.
+    lr_phi:           0.0         
   num_epochs: 500
   scheduler:
     type:   lambda

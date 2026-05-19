@@ -1,11 +1,4 @@
-# M3N structured-hinge baseline on visual HMC chain (§5.2.2).
-#
-# Same role as m3n_hinge_hmc_symbolic.yaml but with MNIST images of the
-# observation digits (T=30 cells per sequence, 1×28×28 each) and a
-# LeNet-5 backbone. The notebook 02 lambda sweep overrides
-# training.optimizer.weight_decay per run; this YAML only sets the
-# default. weight_decay_phi / phi_init_std are absent (validator rejects
-# them for non-lp_m3n losses).
+# M3N structured-hinge baseline on visual HMC chain
 
 experiment:
   name:   hmc_vis_m3n_hinge
@@ -32,8 +25,7 @@ training:
     eval:  viterbi
   optimizer:
     type:         adam
-    lr:           0.001    # smaller than symbolic-HMC's 0.01 because CNNs prefer
-                           # smaller lr; the lambda LR schedule decays it further.
+    lr:           0.001
     weight_decay: 0.001
   num_epochs: 200
   scheduler:
@@ -42,7 +34,7 @@ training:
   eval_every: 3 
   early_stopping:
     monitor:   val_metrics.hamming
-    patience:  60          # 15 evals × eval_every=3 = 45 epochs of no improvement
+    patience:  60          
     min_delta: 0.001
 
 logging:

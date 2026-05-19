@@ -1,14 +1,4 @@
 # LeNet5 backbone for Visual Sudoku.
-#
-# Replicates the architecture used by Kadlec (FEL CVUT bachelor thesis,
-# 2022) for the NN-MIL-M3N-LP visual Sudoku solver. The fully-convolutional
-# stack (no flatten until the final 1x1 spatial map) is the LeNet5 trick:
-# 120 channels of dense features without an oversized FC bridge.
-#
-# Per-cell input is [1, 28, 28]; output is [num_classes] unary potentials,
-# softmax-normalised to bound their magnitude (mitigates the LP-M3N
-# phi-saturation pathology — see thesis Section 3.4).
-
 num_classes: 9
 
 backbone:

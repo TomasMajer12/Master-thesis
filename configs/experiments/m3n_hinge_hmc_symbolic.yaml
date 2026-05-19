@@ -1,8 +1,4 @@
 # M3N structured-hinge baseline on symbolic HMC chain.
-#
-# Used as the oracle for the LP-M3N tightness validation: on chains,
-# structured hinge with Viterbi loss-augmented inference is exact, so
-# the test Hamming this run achieves is what LP-M3N must match.
 
 experiment:
   name:   hmc_sym_m3n_hinge

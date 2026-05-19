@@ -1,19 +1,4 @@
 # OCR digit classifier head for the two-stage Sudoku baseline.
-#
-# Convolutional stack matching configs/architectures/sudoku_lenet5.yaml,
-# so the M3N method and the OCR baseline share an identical feature
-# extractor (clean comparison in the experiments chapter, Section 4.5).
-# Two differences from the M3N config:
-#
-#   - No terminal Softmax. ClassifierTrainer uses nn.CrossEntropyLoss
-#     which applies log-softmax internally; a tail Softmax would
-#     double-apply it and weaken gradients. The validator rejects
-#     softmax-tailed architectures for this baseline.
-#
-#   - No `graph` / `pairwise` blocks. The OCR head is non-structured
-#     (per-cell prediction, no Markov network).
-#
-# Per-image input is [1, 28, 28]; output is [num_classes] raw logits.
 
 num_classes: 9
 

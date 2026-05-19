@@ -1,9 +1,4 @@
 # LP-M3N on symbolic HMC chain.
-#
-# The method side of the tightness validation. Same data and same
-# architecture as m3n_hinge_hmc_symbolic.yaml; only the training path
-# differs (LP-relaxed M3N with per-example phi instead of structured
-# hinge with Viterbi loss-augmented inference).
 
 experiment:
   name:   hmc_sym_lp_m3n

@@ -1,7 +1,4 @@
 # LeNet5 backbone for Visual Sudoku --- NO TERMINAL SOFTMAX.
-#
-# Identical to sudoku_lenet5.yaml except the final Softmax layer is
-# removed, so the unary potentials are unconstrained real-valued logits.
 
 num_classes: 9
 
