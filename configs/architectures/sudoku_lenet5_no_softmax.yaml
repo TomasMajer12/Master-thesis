@@ -1,0 +1,29 @@
+# LeNet5 backbone for Visual Sudoku --- NO TERMINAL SOFTMAX.
+#
+# Identical to sudoku_lenet5.yaml except the final Softmax layer is
+# removed, so the unary potentials are unconstrained real-valued logits.
+
+num_classes: 9
+
+backbone:
+  type: config
+  layers:
+    - {type: conv2d, in_channels: 1, out_channels: 6, kernel_size: 5, padding: 2}
+    - {type: relu}
+    - {type: maxpool2d, kernel_size: 2}
+    - {type: conv2d, in_channels: 6, out_channels: 16, kernel_size: 5}
+    - {type: relu}
+    - {type: maxpool2d, kernel_size: 2}
+    - {type: conv2d, in_channels: 16, out_channels: 120, kernel_size: 5}
+    - {type: relu}
+    - {type: flatten, start_dim: 1}
+    - {type: linear, in_features: 120, out_features: 84}
+    - {type: relu}
+    - {type: linear, in_features: 84, out_features: 9}
+    # NO Softmax tail --- this is the ablation variant.
+
+graph:
+  type: sudoku
+
+pairwise:
+  init_scale: 0.1

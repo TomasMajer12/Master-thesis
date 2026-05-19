@@ -1,0 +1,51 @@
+# LP-M3N on visual Sudoku --- phi-saturation ablation
+
+experiment:
+  name:   vis_sudoku_no_softmax
+  seed:   42
+  device: auto
+
+architecture: ../architectures/sudoku_lenet5_no_softmax.yaml
+
+data:
+  task: sudoku
+  mode: visual
+  paths:
+    benchmark: benchmarks/sudoku
+    mnist:     mnist_data
+  train_size: 1500
+  val_size:   10000
+  test_size:  10000
+  batch_size: 32
+
+training:
+  loss: lp_m3n
+  inference:
+    train: lp
+    eval:  bp
+    params: {bp_iters: 50}
+  optimizer:
+    type:             adam
+    lr:               0.001
+    weight_decay:     0.001
+    weight_decay_phi: 0.0
+    phi_init_std:     0.0
+    lr_phi:           0.01
+    lr_pairwise:      0.01
+  num_epochs: 3000
+  scheduler:
+    type:   lambda
+    params: {offset: 500}
+  eval_every: 10
+  early_stopping:
+    monitor:   val_metrics.zero_one
+    patience:  25
+    min_delta: 0.0
+
+logging:
+  verbose: true
+  print_metrics:
+    - train_loss
+    - val_metrics.hamming
+    - val_metrics.zero_one
+    - diagnostics.phi_norm
