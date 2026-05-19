@@ -192,7 +192,7 @@ def test_trainer_smoke_m3n_hinge():
     )
 
     # New rich history shape:
-    assert history["task"] == "m3n_hinge"
+    assert history["loss"] == "m3n_hinge"
     assert len(history["epoch"]) > 0
     assert len(history["train_metrics"]) == len(history["epoch"])
     assert "hamming"  in history["val_metrics"][-1]
@@ -253,7 +253,7 @@ def test_trainer_smoke_lp_m3n():
         patience=10, min_delta=0.0, verbose=False,
     )
 
-    assert history["task"] == "lp_m3n"
+    assert history["loss"] == "lp_m3n"
     assert len(history["epoch"]) >= 1
     # phi_norm must appear in LP-M3N diagnostics.
     assert "phi_norm" in history["diagnostics"][-1]
@@ -263,8 +263,9 @@ def test_trainer_smoke_lp_m3n():
 # lr_phi: separate learning rate for the phi parameter group
 # ---------------------------------------------------------------------------
 
-def test_lp_m3n_optimizer_has_two_param_groups_with_separate_lrs():
-    """When lr_phi > 0, the phi group uses lr_phi; the model group uses lr."""
+def test_lp_m3n_optimizer_has_three_param_groups_with_separate_lrs():
+    """Group layout: [0] backbone @ lr, [1] pairwise W @ lr_pairwise,
+    [2] phi bank @ lr_phi. When lr_phi > 0 it overrides the model lr."""
     torch.manual_seed(0)
     cfg = TrainingCfg(
         loss            = "lp_m3n",
@@ -286,13 +287,14 @@ def test_lp_m3n_optimizer_has_two_param_groups_with_separate_lrs():
                       n_train=2, device=torch.device("cpu"))
 
     groups = trainer.optimizer.param_groups
-    assert len(groups) == 2, "lp_m3n optimizer should have 2 param groups"
-    assert groups[0]["lr"] == 0.001, "model group lr should be cfg.lr"
-    assert groups[1]["lr"] == 0.05,  "phi group lr should be cfg.lr_phi"
+    assert len(groups) == 3, "lp_m3n optimizer should have 3 param groups"
+    assert groups[0]["lr"] == 0.001, "backbone group lr should be cfg.lr"
+    assert groups[1]["lr"] == 0.001, "pairwise group lr falls back to cfg.lr when lr_pairwise=0"
+    assert groups[2]["lr"] == 0.05,  "phi group lr should be cfg.lr_phi"
 
 
 def test_lp_m3n_lr_phi_zero_falls_back_to_lr():
-    """Sentinel: lr_phi=0 means 'same as lr_model' (preserves prior behaviour)."""
+    """Sentinel: lr_phi=0 (and lr_pairwise=0) means 'same as lr_model'."""
     torch.manual_seed(0)
     cfg = TrainingCfg(
         loss            = "lp_m3n",
@@ -314,12 +316,46 @@ def test_lp_m3n_lr_phi_zero_falls_back_to_lr():
                       n_train=2, device=torch.device("cpu"))
 
     groups = trainer.optimizer.param_groups
-    assert groups[0]["lr"] == 0.01
-    assert groups[1]["lr"] == 0.01, "lr_phi=0 should fall back to lr"
+    assert len(groups) == 3
+    assert groups[0]["lr"] == 0.01, "backbone uses cfg.lr"
+    assert groups[1]["lr"] == 0.01, "pairwise lr_pairwise=0 falls back to lr"
+    assert groups[2]["lr"] == 0.01, "phi lr_phi=0 falls back to lr"
 
 
-def test_m3n_hinge_optimizer_has_one_param_group():
-    """No phi bank for m3n_hinge; only the model param group exists."""
+def test_lp_m3n_lr_pairwise_independent_from_lr():
+    """Regression test for the lr_pairwise loader bug: lr_pairwise > 0 must
+    propagate to the pairwise param group and override the backbone's lr.
+    The earlier bug (lr_pairwise silently defaulting to 0.0 inside the YAML
+    loader) would have made this assertion fail."""
+    torch.manual_seed(0)
+    cfg = TrainingCfg(
+        loss            = "lp_m3n",
+        inference       = InferenceCfg(train="lp", eval="viterbi"),
+        optimizer       = OptimizerCfg(type="adam", lr=0.001, weight_decay=0.0,
+                                       weight_decay_phi=0.0, phi_init_std=0.0,
+                                       lr_pairwise=0.01, lr_phi=0.01),
+        num_epochs      = 1,
+        scheduler       = SchedulerCfg(type="none"),
+        eval_every      = 1,
+        early_stopping  = EarlyStoppingCfg(monitor="val_metrics.hamming",
+                                           patience=1, min_delta=0.0),
+    )
+    backbone = _linear_backbone(3, 3)
+    model = M3N(backbone, 3)
+    edges = chain_edges(4)
+
+    trainer = Trainer(model=model, edges=edges, cfg=cfg,
+                      n_train=2, device=torch.device("cpu"))
+
+    groups = trainer.optimizer.param_groups
+    assert groups[0]["lr"] == 0.001, "backbone uses lr"
+    assert groups[1]["lr"] == 0.01,  "pairwise uses lr_pairwise (10x backbone)"
+    assert groups[2]["lr"] == 0.01,  "phi uses lr_phi"
+
+
+def test_m3n_hinge_optimizer_has_two_param_groups():
+    """No phi bank for m3n_hinge, but the pairwise W still gets its own
+    group so lr_pairwise can be set independently."""
     torch.manual_seed(0)
     backbone = _linear_backbone(3, 3)
     model = M3N(backbone, 3)
@@ -329,5 +365,22 @@ def test_m3n_hinge_optimizer_has_one_param_group():
         cfg=_hinge_training_cfg(),
         n_train=2, device=torch.device("cpu"),
     )
-    assert len(trainer.optimizer.param_groups) == 1
+    groups = trainer.optimizer.param_groups
+    assert len(groups) == 2, "m3n_hinge optimizer should have 2 param groups (backbone + pairwise)"
     assert trainer.phi_bank is None
+
+
+if __name__ == "__main__":
+    test_hamming_loss();                                            print("PASS: hamming_loss")
+    test_zero_one_loss();                                           print("PASS: zero_one_loss")
+    test_loss_zero_when_perfect();                                  print("PASS: loss zero when perfect")
+    test_loss_nonnegative();                                        print("PASS: loss non-negative")
+    test_loss_gradient_flow();                                      print("PASS: loss gradient flow")
+    test_loss_includes_hamming();                                   print("PASS: loss includes hamming")
+    test_trainer_smoke_m3n_hinge();                                 print("PASS: trainer smoke m3n_hinge")
+    test_trainer_smoke_lp_m3n();                                    print("PASS: trainer smoke lp_m3n")
+    test_lp_m3n_optimizer_has_three_param_groups_with_separate_lrs(); print("PASS: lp_m3n optimizer has three param groups with separate lrs")
+    test_lp_m3n_lr_phi_zero_falls_back_to_lr();                       print("PASS: lp_m3n lr_phi=0 falls back to lr")
+    test_lp_m3n_lr_pairwise_independent_from_lr();                    print("PASS: lp_m3n lr_pairwise propagates to pairwise group")
+    test_m3n_hinge_optimizer_has_two_param_groups();                  print("PASS: m3n_hinge optimizer has two param groups")
+    print("\nAll tests passed.")
