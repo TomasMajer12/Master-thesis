@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mnlearn"
+version = "0.1.0"
+description = "End-to-end joint training of neural networks and Markov-network predictors"
+authors = [{name = "Tomáš Majer", email = "tomas.majer12@seznam.cz"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "numpy>=1.24",
+    "pyyaml>=6.0",
+    "matplotlib>=3.7",
+    "pandas>=2.0",
+    "platformdirs>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+# Auto-download the Sudoku dataset via Kaggle. Requires Kaggle credentials.
+# Install with: pip install -e ".[download]"
+download = ["kagglehub>=0.3"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["mnlearn"]
+exclude = [
+    "mnlearn/data/*.csv",   # never bundle large data files in the wheel
+]
