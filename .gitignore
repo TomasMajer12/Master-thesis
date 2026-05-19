@@ -9,6 +9,4 @@ src/__pycache__/
 libs/
 venv/
 *.pyc
-*.pt
-*.json
-
+mnist_data/
