@@ -19,7 +19,7 @@ class in Section~\ref{subsec:method-architecture-full}.
 \label{subsec:method-architecture-backbones}
 
 The abstract backbone interface of
-Section~\ref{subsec:backbone-interface} is realised through the
+Section~\ref{subsec:backbone-interface} is realized through the
 \texttt{ConfigBackbone} class: each architecture is declared as a
 list of layer specifications in YAML, and the per-node forward
 pass shares parameters across all nodes. Two concrete architectures are exercised in this
@@ -93,8 +93,8 @@ all consult the same pairwise weights. This is what makes the
 all-different constraint of
 Section~\ref{sec:markov-networks} \emph{learned soft}: the
 network has to discover, from data, that the pairwise potential
-should penalise equal-label configurations $W_{a, a}$.
-Initialisation is Gaussian with standard deviation
+should penalize equal-label configurations $W_{a, a}$.
+Initialization is Gaussian with standard deviation
 \texttt{pairwise.init\_scale}, set to $0.1$ across all
 architecture YAMLs --- small enough that early training is
 dominated by the unary term (which is easier to learn first),

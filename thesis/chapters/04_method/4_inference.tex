@@ -2,7 +2,7 @@
 \label{sec:method-inference}
 
 At evaluation time the trained predictor maps an input to a
-MAP labeling by maximising the joint score
+MAP labeling by maximizing the joint score
 $f(x, y)$ of Eq.~\eqref{eq:method-mn-score} over
 $y \in \mathcal{Y}^{|V|}$. The choice of decoder is dictated
 by the graph structure: chains admit an exact polynomial-time
@@ -29,7 +29,7 @@ On the Sudoku constraint graph, MAP is NP-hard
 (Section~\ref{sec:map-inference}). The decoder used in this
 thesis is the loopy max-sum Belief Propagation algorithm of
 Section~\ref{subsec:belief-propagation}, implemented in
-\texttt{mnlearn.inference.bp\_decode} with messages re-normalised
+\texttt{mnlearn.inference.bp\_decode} with messages re-normalized
 by subtracting the per-edge maximum after each update for
 numerical stability. The number of message-passing iterations is
 a YAML knob (\texttt{inference.params.bp\_iters}, default $50$);

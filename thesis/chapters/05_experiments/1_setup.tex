@@ -23,16 +23,16 @@ $S = 3$; the visual Sudoku results of
 Section~\ref{sec:experiments-sudoku} use $S = 5$. The
 train/validation/test splits are fixed by the benchmark
 builder (Chapter~\ref{chap:datasets}) and shared across all
-seeds; only the optimisation seed varies.
+seeds; only the optimization seed varies.
 
 \paragraph{Metrics.}
 Both evaluation losses of
-Section~\ref{subsec:loss-functions} --- the per-cell normalised
+Section~\ref{subsec:loss-functions} --- the per-cell normalized
 Hamming loss and the per-puzzle $0/1$ loss --- are reported on
 the test split.
 
 \paragraph{Hyperparameter selection.}
-For each experiment, the regularisation strength $\lambda$
+For each experiment, the regularization strength $\lambda$
 (\texttt{weight\_decay}), learning rate, and schedule offset are
 selected on the held-out validation split (Hamming as the
 monitor metric); other hyperparameters (batch size, number of
@@ -41,6 +41,6 @@ Section~\ref{sec:method-training} unless noted otherwise.
 
 \paragraph{Learning curves.}
 When a metric is plotted as a function of a varying parameter
-(e.g.\ the training-set size $N$ or the regularisation strength
+(e.g.\ the training-set size $N$ or the regularization strength
 $\lambda$), the curve shows the mean across seeds with a shaded
 band giving $\pm 1$ standard deviation.

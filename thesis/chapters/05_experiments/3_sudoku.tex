@@ -24,7 +24,7 @@ Linear($K \to K$) layer with a terminal Softmax) paired with
 the Sudoku constraint graph
 (Section~\ref{subsec:method-architecture-mn}, $|V| = 81$,
 $|E| = 810$). Training uses the LP-M3N loss with the BP decoder
-at evaluation time. Four values of the regularisation strength
+at evaluation time. Four values of the regularization strength
 ($\lambda \in \{10^{-3}, 5\cdot 10^{-3}, 10^{-2}, 5\cdot 10^{-2}\}$)
 were checked at $N = 100$ to confirm $\lambda$-insensitivity;
 the learning curve below fixes $\lambda = 10^{-3}$ and sweeps
@@ -125,7 +125,7 @@ of puzzles.}
 \includegraphics[width=\textwidth]{figures/ocr_baseline_main/learning_curve}
 \caption[OCR baseline curves]{Two-stage OCR baseline as a
 function of training-set size $N$ (three seeds, mean $\pm$
-std band). Left: test $0/1$ error. Centre: OCR per-clue error
+std band). Left: test $0/1$ error. Center: OCR per-clue error
 (component diagnostic). Right: solver feasibility.}
 \label{fig:ocr-baseline-curves}
 \end{figure}
@@ -143,7 +143,7 @@ training-set sizes, $N \in \{100, 500, 1500, 5000\}$, with
 five seeds each. The pairwise matrix $W$ uses its own learning
 rate \texttt{lr\_pairwise} $= 0.01$ (ten times the backbone
 rate), discussed empirically in
-Section~\ref{sec:experiments-discussion}. The regularisation
+Section~\ref{sec:experiments-discussion}. The regularization
 strength $\lambda$ was selected on validation sweeps at two
 pivot training-set sizes --- $N = 500$ for the smaller end and
 $N = 1500$ for the larger --- and frozen for the remaining
@@ -158,7 +158,7 @@ Hamming below $0.7\%$. Both metrics improve monotonically with
 $N$ (Figure~\ref{fig:visual-sudoku-learning-curve}); the
 seed-to-seed variance shrinks alongside, from $\pm 0.019$ at
 $N = 100$ down to $\pm 0.005$ at $N = 5000$, as expected when
-more training puzzles smooth out the optimisation trajectory.
+more training puzzles smooth out the optimization trajectory.
 
 \begin{table}[htbp]
 \centering

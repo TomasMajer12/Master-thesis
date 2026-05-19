@@ -26,7 +26,7 @@ hard pick. Second, the pairwise term lets that uncertainty
 propagate through the constraint graph --- a clue cell whose
 top-1 OCR prediction would violate a row or column can be
 overridden once Belief Propagation has aggregated evidence from
-the neighbours. The $5\%$ puzzle-level error at $N = 5000$ is
+the neighbors. The $5\%$ puzzle-level error at $N = 5000$ is
 the joint payoff of these two mechanisms --- not better
 perception, but perception that knows when to defer to
 structure.
@@ -43,11 +43,11 @@ accumulates gradient only through the LP-M\textsuperscript{3}N's
 pairwise sufficient statistics, which the backbone is
 simultaneously trying to dominate. With identical learning
 rates the backbone converges within tens of epochs while $W$
-lingers near its small-Gaussian initialisation, and the
+lingers near its small-Gaussian initialization, and the
 predictor degenerates to a per-cell classifier whose soft
 Sudoku prior is too weak to override mis-read clues. Setting
 \texttt{lr\_pairwise} to ten times \texttt{lr\_model} re-balances
-the optimisation: $W$ acquires the diagonal-dominant
+the optimization: $W$ acquires the diagonal-dominant
 all-different shape within the first hundred epochs, and the
 joint predictor escapes the per-cell-classifier plateau that
 fixed-LR runs settle into.
@@ -90,7 +90,7 @@ epoch at which all three seeds still have real data.}
 The dominant caveat in the visual-Sudoku results is that Belief
 Propagation is exact only on trees: on the cyclic Sudoku graph
 it can converge to a fixed point that is not the global MAP,
-and occasionally returns a labelling that violates a Sudoku
+and occasionally returns a labeling that violates a Sudoku
 constraint. The residual $\sim 5\%$ errors at $N = 5000$ have
 not been broken down into perception-induced versus
 decoding-induced failures; quantifying the BP gap against an
@@ -108,18 +108,18 @@ on visual data the breakdown is open.
 The empirical results should be read with the following
 caveats. The Sudoku benchmark draws from a single source
 (Kaggle's \texttt{bryanpark/sudoku}~\cite{park2018sudoku}) that
-is essentially a single difficulty grade; generalisation to
+is essentially a single difficulty grade; generalization to
 harder puzzles with fewer clues is not tested. The visual
 variants are rendered from MNIST only; transfer to other
 handwriting domains is open. The training-set sizes are limited
-to $N \leq 5000$; behaviour at much larger $N$ (the source has
+to $N \leq 5000$; behavior at much larger $N$ (the source has
 $\sim 10^{6}$ puzzles available) is unexplored. The evaluation
 decoder is Belief Propagation, which is approximate on the
 Sudoku graph; the gap to an exact decoder is unmeasured
 (Section~\ref{subsec:discussion-failure-modes}). Finally,
 absolute headline numbers may shift with longer training
 budgets, larger backbones, or alternative pairwise
-parameterisations
+parameterizations
 
 \subsection{Connections to the broader literature}
 \label{subsec:discussion-connections}
@@ -129,7 +129,7 @@ Franc \& Yermakov~\cite{franc2021}, who introduced the
 relaxation as a tractable surrogate for max-margin learning
 under missing labels; the consistency analysis was extended by
 Franc, Pr\r{u}\v{s}a \& Yermakov~\cite{franc2022}. This thesis
-applies the relaxation in the fully-labelled setting and uses
+applies the relaxation in the fully-labeled setting and uses
 it as the principal training loss on cyclic graphs, where exact
 hinge is intractable. The neuro-symbolic combination of a
 learned perceptual backbone with a structured decision layer

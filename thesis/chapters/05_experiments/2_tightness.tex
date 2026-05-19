@@ -109,14 +109,14 @@ observation digits are rendered as MNIST images
 the LeNet-5 backbone of
 Section~\ref{subsec:method-architecture-backbones} in place of
 the linear baseline. Each loss is run with three seeds at six
-values of the regularisation strength
+values of the regularization strength
 $\lambda \in \{0, 10^{-4}, 5\cdot 10^{-4}, 10^{-3}, 5\cdot
 10^{-3}, 10^{-2}\}$, giving $36$ runs in total. Training runs
 for $200$ epochs.
 
 \paragraph{Best-$\lambda$ results.}
 Each loss was run with three seeds at six values of the
-regularisation strength
+regularization strength
 $\lambda \in \{0, 10^{-4}, 5\cdot 10^{-4}, 10^{-3}, 5\cdot
 10^{-3}, 10^{-2}\}$. Test Hamming was largely insensitive to
 $\lambda$ for both losses (variation within $\sim 0.007$). The
@@ -134,7 +134,7 @@ seed $0$. Both reach the plateau within the first $\sim 50$
 epochs. The structured-hinge curve then drifts upward after
 epoch $\sim 75$ --- a clear sign of overfitting on the LeNet-5
 backbone. LP-M3N stays at the lower plateau through the full
-$200$-epoch run, supporting the regularisation interpretation
+$200$-epoch run, supporting the regularization interpretation
 above.
 
 \begin{figure}[htbp]
