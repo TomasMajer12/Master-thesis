@@ -1,0 +1,208 @@
+\documentclass{ctuthesis}
+
+\ctusetup{
+	xdoctype = M,
+	xfaculty = F3,
+	mainlanguage = english,
+	titlelanguage = english,
+	title-english = {Visual Sudoku Solver},
+	title-czech = {Visual Sudoku Solver},
+	department-english = {Department of Cybernetics},
+	author = {Tomáš Majer},
+	supervisor = { Ing. Vojtěch Franc, Ph.D.},
+	%supervisor-address = {Pěstitelský ústav,\\ Zářivá 232,\\
+	  %12000 Praha 2},
+	month = 5,
+	year = 2026,
+    keywords-english = {Sudoku; Markov Networks; structured prediction;
+                        max-margin learning; LP relaxation;
+                        neuro-symbolic learning},
+    keywords-czech   = {Sudoku; Markovovské sítě; strukturovaná predikce;
+                        max-margin učení; LP relaxace;
+                        neurosymbolické učení},
+}
+
+\ctuprocess
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{bbm}
+\usepackage{graphicx}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+
+
+\begin{abstract-english}
+This thesis presents a machine learning approach for training a Sudoku solver directly from examples of puzzle-solution pairs. Our method supports both symbolic numerical grids and raw visual inputs (per-cell images). We propose an end-to-end trainable neural network that incorporates a Markov Network as its final decision layer. Specifically, a LeNet-5 backbone generates per-cell unary scores, while a learned pairwise term encodes the "all-different" constraints intrinsic to the Sudoku graph. For training, we employ an LP-relaxed max-margin (M\textsuperscript{3}N) surrogate objective with per-example dual variables, utilizing loopy belief propagation for decoding during inference. To demonstrate the generality of the framework, we first validate it on a chain HMC benchmark, where the LP relaxation is tight. Furthermore, when evaluated on 9x9 visual Sudoku tasks trained with N = 5000 examples, our joint predictor achieves a 5\% per-puzzle error rate, outperforming a standard two-stage baseline (OCR followed by a discrete solver)
+\end{abstract-english}
+
+\begin{abstract-czech}
+Tato práce představuje metodu strojového učení pro trénování řešiče sudoku přímo z příkladů ve formě párů zadání a řešení. Náš přístup podporuje jak symbolické vstupy (číselná mřížka), tak i surové vizuální vstupy (obrázky jednotlivých polí). Navrhujeme end-to-end trénovatelnou neuronovou síť, jejíž finální rozhodovací vrstvu tvoří Markovovská síť. Páteřní architektura LeNet-5 generuje unární skóre pro jednotlivá pole, zatímco naučený párový člen na grafu sudoku kóduje podmínku různosti (all-different constraint). K trénování využíváme LP-relaxovanou max-margin (M\textsuperscript{3}N) zástupnou účelovou funkci s duálními proměnnými pro každý příklad, přičemž dekódování během inference probíhá pomocí algoritmu loopy belief propagation. Univerzálnost tohoto rámce je nejprve ověřena na řetězcovém benchmarku HMC, kde je LP relaxace těsná. Při nasazení na úlohu vizuálního sudoku o velikosti 9x9 dosahuje náš sdružený prediktor (při velikosti trénovací množiny N = 5000) chybovosti pouhých 5\,\% na celý hlavolam, čímž standardní dvoufázový přístup (OCR + diskrétní řešič).
+\end{abstract-czech}
+
+\begin{document}
+\maketitle
+
+\chapter{Introduction}\label{chap:intro}
+\input{chapters/01_introduction/introduction}
+
+\chapter{Theoretical Background}\label{chap:background}
+\input{chapters/02_theoretical_background/1_theoretical_background}
+\input{chapters/02_theoretical_background/2_theoretical_background_MN}
+\input{chapters/02_theoretical_background/3_theoretical_background_MAP}
+\input{chapters/02_theoretical_background/4_theoretical_background_learning}
+\input{chapters/02_theoretical_background/5_theoretical_background}
+
+\chapter{Datasets}\label{chap:datasets}
+\input{chapters/03_datasets/1_overview}
+\input{chapters/03_datasets/2_sudoku}
+\input{chapters/03_datasets/3_hmc}
+\input{chapters/03_datasets/4_comparison}
+
+\chapter{Method}\label{chap:method}
+\input{chapters/04_method/1_overview}
+\input{chapters/04_method/2_predictor}
+\input{chapters/04_method/3_training}
+\input{chapters/04_method/4_inference}
+\input{chapters/04_method/5_baseline}
+\input{chapters/04_method/6_implementation}
+
+\chapter{Experiments and Results}\label{chap:experiments}
+\input{chapters/05_experiments/1_setup}
+\input{chapters/05_experiments/2_tightness}
+\input{chapters/05_experiments/3_sudoku}
+\input{chapters/05_experiments/4_discussion}
+
+\chapter{Conclusion}\label{chap:conclusion}
+\input{chapters/06_conclusion/1_summary}
+\input{chapters/06_conclusion/2_findings}
+\input{chapters/06_conclusion/3_future_work}
+
+
+\begin{thebibliography}{99}
+
+\bibitem{wang2019satnet}
+P.~Wang, P.~L.~Donti, B.~Wilder, and J.~Z.~Kolter.
+\newblock SATNet: Bridging deep learning and logical reasoning using a
+differentiable satisfiability solver.
+\newblock In \emph{International Conference on Machine Learning (ICML)},
+2019.
+\newblock \url{https://proceedings.mlr.press/v97/wang19e.html}
+
+\bibitem{franc2021}
+V.~Franc and A.~Yermakov.
+\newblock Learning maximum margin Markov networks from examples with
+missing labels.
+\newblock In \emph{Asian Conference on Machine Learning (ACML)},
+PMLR 157:1691--1706, 2021.
+\newblock \url{https://proceedings.mlr.press/v157/franc21a.html}
+
+\bibitem{Koller2009}
+D.~Koller and N.~Friedman.
+\newblock \emph{Probabilistic Graphical Models: Principles and Techniques}.
+\newblock MIT Press, 2009.
+\newblock \url{https://mitpress.mit.edu/9780262013192/probabilistic-graphical-models/}
+
+\bibitem{Lafferty2001}
+J.~Lafferty, A.~McCallum, and F.~C.~N.~Pereira.
+\newblock Conditional random fields: Probabilistic models for segmenting
+and labeling sequence data.
+\newblock In \emph{International Conference on Machine Learning (ICML)},
+pages 282--289, 2001.
+\newblock \url{https://repository.upenn.edu/cis_papers/159/}
+
+\bibitem{Taskar2004}
+B.~Taskar, C.~Guestrin, and D.~Koller.
+\newblock Max-margin Markov networks.
+\newblock In \emph{Advances in Neural Information Processing Systems
+(NeurIPS)}, 2004.
+\newblock \url{https://papers.nips.cc/paper_files/paper/2003/hash/878d5691c824ee2aaf770f7d36c151d6-Abstract.html}
+
+\bibitem{Tsochantaridis2005}
+I.~Tsochantaridis, T.~Joachims, T.~Hofmann, and Y.~Altun.
+\newblock Large margin methods for structured and interdependent output
+variables.
+\newblock \emph{Journal of Machine Learning Research}, 6:1453--1484, 2005.
+\newblock \url{https://www.jmlr.org/papers/v6/tsochantaridis05a.html}
+
+\bibitem{Viterbi1967}
+A.~J.~Viterbi.
+\newblock Error bounds for convolutional codes and an asymptotically
+optimum decoding algorithm.
+\newblock \emph{IEEE Transactions on Information Theory},
+13(2):260--269, 1967.
+\newblock \url{https://doi.org/10.1109/TIT.1967.1054010}
+
+\bibitem{Forney1973}
+G.~D.~Forney.
+\newblock The Viterbi algorithm.
+\newblock \emph{Proceedings of the IEEE}, 61(3):268--278, 1973.
+\newblock \url{https://doi.org/10.1109/PROC.1973.9030}
+
+\bibitem{Shimony1994}
+S.~E.~Shimony.
+\newblock Finding MAPs for belief networks is NP-hard.
+\newblock \emph{Artificial Intelligence}, 68(2):399--410, 1994.
+\newblock \url{https://doi.org/10.1016/0004-3702(94)90072-8}
+
+\bibitem{Werner2007}
+T.~Werner.
+\newblock A linear programming approach to max-sum problem: A review.
+\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
+Intelligence}, 29(7):1165--1179, 2007.
+\newblock \url{https://doi.org/10.1109/TPAMI.2007.1036}
+
+\bibitem{franc2022}
+V.~Franc, D.~Pr\r{u}\v{s}a, and A.~Yermakov.
+\newblock Consistent and tractable algorithm for Markov network
+learning.
+\newblock In \emph{European Conference on Machine Learning (ECML-PKDD)},
+LNCS 13716, Springer, 2022.
+\newblock \url{https://link.springer.com/chapter/10.1007/978-3-031-26412-2_27}
+
+\bibitem{Bakir2007}
+G.~H.~Bakir, T.~Hofmann, B.~Sch\"olkopf, A.~J.~Smola, B.~Taskar, and
+S.~V.~N.~Vishwanathan, eds.
+\newblock \emph{Predicting Structured Data}.
+\newblock MIT Press, 2007.
+\newblock \url{https://direct.mit.edu/books/edited-volume/2964/Predicting-Structured-Data}
+
+\bibitem{LeCun1998}
+Y.~LeCun, L.~Bottou, Y.~Bengio, and P.~Haffner.
+\newblock Gradient-based learning applied to document recognition.
+\newblock \emph{Proceedings of the IEEE}, 86(11):2278--2324, 1998.
+\newblock \url{https://doi.org/10.1109/5.726791}
+
+\bibitem{d2l-lenet}
+A.~Zhang, Z.~C.~Lipton, M.~Li, and A.~J.~Smola.
+\newblock Convolutional neural networks (LeNet).
+\newblock In \emph{Dive into Deep Learning}.
+\newblock \url{https://d2l.ai/chapter_convolutional-neural-networks/lenet.html#lenet}.
+\newblock [Online; accessed 2026-05-09].
+
+\bibitem{park2018sudoku}
+B.~Park.
+\newblock 1 million Sudoku games.
+\newblock Kaggle dataset, 2018.
+\newblock \url{https://www.kaggle.com/datasets/bryanpark/sudoku}.
+\newblock [Online; accessed 2026-05-09].
+
+\bibitem{norvig2006sudoku}
+P.~Norvig.
+\newblock Solving every Sudoku puzzle.
+\newblock 2006.
+\newblock \url{https://norvig.com/sudoku.html}.
+\newblock [Online; accessed 2026-05-09].
+
+\bibitem{russell2020aima}
+S.~Russell and P.~Norvig.
+\newblock \emph{Artificial Intelligence: A Modern Approach}.
+\newblock Pearson, 4th edition, 2020.
+
+
+\end{thebibliography}
+
+\end{document}
+
