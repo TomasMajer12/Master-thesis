@@ -1,0 +1,29 @@
+[
+  {
+    "config": {
+      "N": 500,
+      "wd": 0.005,
+      "seed": 0
+    },
+    "n_puzzles": 100,
+    "agreement_rate": 0.82,
+    "BP_01": {
+      "mean": 0.14,
+      "std": 0.34873508801977704
+    },
+    "ADAG_01": {
+      "mean": 0.22,
+      "std": 0.4163331998932266
+    },
+    "BP_hamming": {
+      "mean": 0.014320987654320987,
+      "std": 0.05564817486298018
+    },
+    "ADAG_hamming": {
+      "mean": 0.07061728395061728,
+      "std": 0.15016173270429556
+    },
+    "BP_strictly_worse_01_rate": 0.0,
+    "ADAG_strictly_worse_01_rate": 0.08
+  }
+]

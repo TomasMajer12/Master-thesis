@@ -1,0 +1,1009 @@
+{
+  "config": {
+    "N": 5000,
+    "wd": 0.001,
+    "seed": 0
+  },
+  "puzzles": [
+    {
+      "puzzle_idx": 35,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.6152167465649,
+      "t_adag": 170.52898693084717
+    },
+    {
+      "puzzle_idx": 39,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.2907768226672,
+      "t_adag": 94.91910457611084
+    },
+    {
+      "puzzle_idx": 107,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 314.67480680692586,
+      "t_adag": 167.0269935131073
+    },
+    {
+      "puzzle_idx": 251,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.20534946634643,
+      "t_adag": 107.28244495391846
+    },
+    {
+      "puzzle_idx": 321,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.4056964872217,
+      "t_adag": 93.07066297531128
+    },
+    {
+      "puzzle_idx": 439,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 314.73804158810526,
+      "t_adag": 157.68675446510315
+    },
+    {
+      "puzzle_idx": 576,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 314.54780822319,
+      "t_adag": 136.6499149799347
+    },
+    {
+      "puzzle_idx": 582,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.63246925626345,
+      "t_adag": 138.08383178710938
+    },
+    {
+      "puzzle_idx": 799,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.39131810716435,
+      "t_adag": 108.18024015426636
+    },
+    {
+      "puzzle_idx": 952,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.528038473972,
+      "t_adag": 92.9321801662445
+    },
+    {
+      "puzzle_idx": 971,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.6312991928819,
+      "t_adag": 97.85058951377869
+    },
+    {
+      "puzzle_idx": 1056,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.6401672630982,
+      "t_adag": 150.12070393562317
+    },
+    {
+      "puzzle_idx": 1188,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.3421331192657,
+      "t_adag": 463.86008310317993
+    },
+    {
+      "puzzle_idx": 1315,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.4259417263022,
+      "t_adag": 131.73938488960266
+    },
+    {
+      "puzzle_idx": 1513,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.5192047431129,
+      "t_adag": 133.8394536972046
+    },
+    {
+      "puzzle_idx": 1731,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.2763014927772,
+      "t_adag": 98.33384418487549
+    },
+    {
+      "puzzle_idx": 1760,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.4760031735723,
+      "t_adag": 172.848468542099
+    },
+    {
+      "puzzle_idx": 1963,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.32593950829755,
+      "t_adag": 167.43561601638794
+    },
+    {
+      "puzzle_idx": 2020,
+      "agree": false,
+      "H_bp": 0.037037037037037035,
+      "H_adag": 0.2962962962962963,
+      "01_bp": 1.0,
+      "01_adag": 1.0,
+      "energy_adag": 315.7073433075854,
+      "t_adag": 635.5435535907745
+    },
+    {
+      "puzzle_idx": 2249,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.4426372880721,
+      "t_adag": 136.0572545528412
+    },
+    {
+      "puzzle_idx": 2304,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.28672269262603,
+      "t_adag": 101.83404064178467
+    },
+    {
+      "puzzle_idx": 2545,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.521089672941,
+      "t_adag": 101.79821276664734
+    },
+    {
+      "puzzle_idx": 2592,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.6165202720769,
+      "t_adag": 110.5147716999054
+    },
+    {
+      "puzzle_idx": 2678,
+      "agree": false,
+      "H_bp": 0.12345679012345678,
+      "H_adag": 0.3950617283950617,
+      "01_bp": 1.0,
+      "01_adag": 1.0,
+      "energy_adag": 315.7059122416146,
+      "t_adag": 615.2681436538696
+    },
+    {
+      "puzzle_idx": 2750,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.5173260015719,
+      "t_adag": 99.65894556045532
+    },
+    {
+      "puzzle_idx": 2753,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.1415756425772,
+      "t_adag": 98.2668285369873
+    },
+    {
+      "puzzle_idx": 2876,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.17019782005065,
+      "t_adag": 104.2798593044281
+    },
+    {
+      "puzzle_idx": 2894,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.5183670089958,
+      "t_adag": 106.15763330459595
+    },
+    {
+      "puzzle_idx": 2927,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.11357639544553,
+      "t_adag": 164.2782542705536
+    },
+    {
+      "puzzle_idx": 3006,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.4807527450601,
+      "t_adag": 132.09856462478638
+    },
+    {
+      "puzzle_idx": 3032,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.62142751366144,
+      "t_adag": 148.95122075080872
+    },
+    {
+      "puzzle_idx": 3039,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.60593331947047,
+      "t_adag": 127.79667496681213
+    },
+    {
+      "puzzle_idx": 3145,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.5154488015137,
+      "t_adag": 115.86294722557068
+    },
+    {
+      "puzzle_idx": 3154,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.16086304841457,
+      "t_adag": 120.749680519104
+    },
+    {
+      "puzzle_idx": 3305,
+      "agree": true,
+      "H_bp": 0.07407407407407407,
+      "H_adag": 0.07407407407407407,
+      "01_bp": 1.0,
+      "01_adag": 1.0,
+      "energy_adag": 316.59904411611166,
+      "t_adag": 127.07920098304749
+    },
+    {
+      "puzzle_idx": 3337,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.51522029795655,
+      "t_adag": 157.2656605243683
+    },
+    {
+      "puzzle_idx": 3465,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.2994126244818,
+      "t_adag": 155.1698670387268
+    },
+    {
+      "puzzle_idx": 3570,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.507989503951,
+      "t_adag": 133.21757411956787
+    },
+    {
+      "puzzle_idx": 3723,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.52963107881914,
+      "t_adag": 413.87737131118774
+    },
+    {
+      "puzzle_idx": 3787,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.64052124227067,
+      "t_adag": 120.45491051673889
+    },
+    {
+      "puzzle_idx": 3857,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.64227304674586,
+      "t_adag": 189.6341278553009
+    },
+    {
+      "puzzle_idx": 3973,
+      "agree": false,
+      "H_bp": 0.0,
+      "H_adag": 0.4567901234567901,
+      "01_bp": 0.0,
+      "01_adag": 1.0,
+      "energy_adag": 314.09229717292897,
+      "t_adag": 1033.4331922531128
+    },
+    {
+      "puzzle_idx": 3999,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.40198619509187,
+      "t_adag": 76.26040935516357
+    },
+    {
+      "puzzle_idx": 4521,
+      "agree": true,
+      "H_bp": 0.09876543209876543,
+      "H_adag": 0.09876543209876543,
+      "01_bp": 1.0,
+      "01_adag": 1.0,
+      "energy_adag": 315.6206944050985,
+      "t_adag": 134.4216902256012
+    },
+    {
+      "puzzle_idx": 4625,
+      "agree": false,
+      "H_bp": 0.0,
+      "H_adag": 0.5061728395061729,
+      "01_bp": 0.0,
+      "01_adag": 1.0,
+      "energy_adag": 314.51635864603924,
+      "t_adag": 1366.1493713855743
+    },
+    {
+      "puzzle_idx": 4640,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.51781295174095,
+      "t_adag": 137.68550610542297
+    },
+    {
+      "puzzle_idx": 4684,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.39157010095454,
+      "t_adag": 99.01073265075684
+    },
+    {
+      "puzzle_idx": 4742,
+      "agree": false,
+      "H_bp": 0.0,
+      "H_adag": 0.3333333333333333,
+      "01_bp": 0.0,
+      "01_adag": 1.0,
+      "energy_adag": 316.3426756980196,
+      "t_adag": 627.1527500152588
+    },
+    {
+      "puzzle_idx": 4819,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 314.9961428669362,
+      "t_adag": 123.8432719707489
+    },
+    {
+      "puzzle_idx": 4947,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.3690124449334,
+      "t_adag": 86.27014803886414
+    },
+    {
+      "puzzle_idx": 4949,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.57767584608314,
+      "t_adag": 135.273277759552
+    },
+    {
+      "puzzle_idx": 4993,
+      "agree": true,
+      "H_bp": 0.04938271604938271,
+      "H_adag": 0.04938271604938271,
+      "01_bp": 1.0,
+      "01_adag": 1.0,
+      "energy_adag": 315.146659818659,
+      "t_adag": 171.0659408569336
+    },
+    {
+      "puzzle_idx": 5202,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.3303672249323,
+      "t_adag": 89.56565427780151
+    },
+    {
+      "puzzle_idx": 5272,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.35892678776804,
+      "t_adag": 106.95370364189148
+    },
+    {
+      "puzzle_idx": 5323,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.5199420333302,
+      "t_adag": 103.70436811447144
+    },
+    {
+      "puzzle_idx": 5359,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.50630343917595,
+      "t_adag": 107.2799117565155
+    },
+    {
+      "puzzle_idx": 5547,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.2586217948085,
+      "t_adag": 86.0990719795227
+    },
+    {
+      "puzzle_idx": 5589,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.367589800482,
+      "t_adag": 84.7318549156189
+    },
+    {
+      "puzzle_idx": 5653,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.56233033917357,
+      "t_adag": 128.7771909236908
+    },
+    {
+      "puzzle_idx": 5861,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 318.29240337604546,
+      "t_adag": 106.71893501281738
+    },
+    {
+      "puzzle_idx": 6033,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.3909812314031,
+      "t_adag": 94.24896383285522
+    },
+    {
+      "puzzle_idx": 6077,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.4947664251934,
+      "t_adag": 125.77168273925781
+    },
+    {
+      "puzzle_idx": 6231,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.38190598895454,
+      "t_adag": 143.40385842323303
+    },
+    {
+      "puzzle_idx": 6252,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.48028733462087,
+      "t_adag": 136.62014174461365
+    },
+    {
+      "puzzle_idx": 6340,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.5139129857783,
+      "t_adag": 142.91691184043884
+    },
+    {
+      "puzzle_idx": 6363,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 314.7443147993697,
+      "t_adag": 153.12565159797668
+    },
+    {
+      "puzzle_idx": 6590,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.37683002182524,
+      "t_adag": 67.33034944534302
+    },
+    {
+      "puzzle_idx": 6630,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.58181002886965,
+      "t_adag": 141.6463978290558
+    },
+    {
+      "puzzle_idx": 6687,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.51966691414935,
+      "t_adag": 137.43185234069824
+    },
+    {
+      "puzzle_idx": 7051,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.38431149057556,
+      "t_adag": 152.72405099868774
+    },
+    {
+      "puzzle_idx": 7231,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.42904431740345,
+      "t_adag": 126.00406956672668
+    },
+    {
+      "puzzle_idx": 7438,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.50568471076417,
+      "t_adag": 144.90404772758484
+    },
+    {
+      "puzzle_idx": 7487,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 314.70834785676016,
+      "t_adag": 169.162278175354
+    },
+    {
+      "puzzle_idx": 7539,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.0332196619917,
+      "t_adag": 110.89142632484436
+    },
+    {
+      "puzzle_idx": 7770,
+      "agree": false,
+      "H_bp": 0.09876543209876543,
+      "H_adag": 0.35802469135802467,
+      "01_bp": 1.0,
+      "01_adag": 1.0,
+      "energy_adag": 314.9520071887742,
+      "t_adag": 819.0250957012177
+    },
+    {
+      "puzzle_idx": 7825,
+      "agree": false,
+      "H_bp": 0.04938271604938271,
+      "H_adag": 0.4567901234567901,
+      "01_bp": 1.0,
+      "01_adag": 1.0,
+      "energy_adag": 314.7292985345973,
+      "t_adag": 802.2315018177032
+    },
+    {
+      "puzzle_idx": 7938,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 314.74171466631753,
+      "t_adag": 156.71588850021362
+    },
+    {
+      "puzzle_idx": 7942,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.87218615819967,
+      "t_adag": 115.89093208312988
+    },
+    {
+      "puzzle_idx": 7966,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.7843262177311,
+      "t_adag": 115.92445158958435
+    },
+    {
+      "puzzle_idx": 8127,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.39364126875927,
+      "t_adag": 83.94709396362305
+    },
+    {
+      "puzzle_idx": 8158,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.4103115041331,
+      "t_adag": 115.8545548915863
+    },
+    {
+      "puzzle_idx": 8178,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 318.2052832095286,
+      "t_adag": 132.1151943206787
+    },
+    {
+      "puzzle_idx": 8187,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.28919405244955,
+      "t_adag": 124.28906679153442
+    },
+    {
+      "puzzle_idx": 8243,
+      "agree": false,
+      "H_bp": 0.0,
+      "H_adag": 0.3950617283950617,
+      "01_bp": 0.0,
+      "01_adag": 1.0,
+      "energy_adag": 315.9524285697129,
+      "t_adag": 1048.676078081131
+    },
+    {
+      "puzzle_idx": 8284,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.4726862214893,
+      "t_adag": 149.09851360321045
+    },
+    {
+      "puzzle_idx": 8328,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.3602876636877,
+      "t_adag": 97.36605477333069
+    },
+    {
+      "puzzle_idx": 8362,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.2498463825924,
+      "t_adag": 137.92791867256165
+    },
+    {
+      "puzzle_idx": 8575,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.30935251518537,
+      "t_adag": 128.8847517967224
+    },
+    {
+      "puzzle_idx": 8847,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.52778319660086,
+      "t_adag": 111.71567034721375
+    },
+    {
+      "puzzle_idx": 9001,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 317.38803647670636,
+      "t_adag": 117.85468745231628
+    },
+    {
+      "puzzle_idx": 9054,
+      "agree": false,
+      "H_bp": 0.0,
+      "H_adag": 0.43209876543209874,
+      "01_bp": 0.0,
+      "01_adag": 1.0,
+      "energy_adag": 313.8550306783661,
+      "t_adag": 453.3537600040436
+    },
+    {
+      "puzzle_idx": 9189,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.45993081654893,
+      "t_adag": 106.41353869438171
+    },
+    {
+      "puzzle_idx": 9238,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 314.8388607421332,
+      "t_adag": 143.0936782360077
+    },
+    {
+      "puzzle_idx": 9317,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.3192538167964,
+      "t_adag": 93.6563491821289
+    },
+    {
+      "puzzle_idx": 9485,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.5278785327079,
+      "t_adag": 121.4604868888855
+    },
+    {
+      "puzzle_idx": 9655,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.5300741117468,
+      "t_adag": 159.75298166275024
+    },
+    {
+      "puzzle_idx": 9753,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.6348484772854,
+      "t_adag": 132.66631245613098
+    },
+    {
+      "puzzle_idx": 9896,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 315.5821101678149,
+      "t_adag": 131.9167082309723
+    },
+    {
+      "puzzle_idx": 9920,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.193108066037,
+      "t_adag": 117.03115200996399
+    },
+    {
+      "puzzle_idx": 9930,
+      "agree": true,
+      "H_bp": 0.0,
+      "H_adag": 0.0,
+      "01_bp": 0.0,
+      "01_adag": 0.0,
+      "energy_adag": 316.1060713922839,
+      "t_adag": 155.32547068595886
+    }
+  ]
+}
