@@ -44,8 +44,11 @@ M\textsuperscript{3}N predictor matches the solver oracle.
 \includegraphics[width=0.95\textwidth]{figures/sudoku_sym_tightness/learning_curve}
 \caption[Symbolic Sudoku learning curve]{Test Hamming loss
 (left) and per-puzzle $0/1$ error (right) as a function of
-training-set size $N$ on symbolic Sudoku. The solver-oracle
-floor of $0$ is reached for every $N \geq 100$.}
+training-set size $N$ on symbolic Sudoku. Line: mean across
+three seeds; shaded band: empirical min--max range across
+seeds (used in place of mean $\pm$ std because the error scale
+is so small that the std crosses the physical floor at zero).
+The solver-oracle floor of $0$ is reached for every $N \geq 100$.}
 \label{fig:sudoku-symbolic-learning-curve}
 \end{figure}
 
