@@ -14,7 +14,7 @@ Two training paths are implemented behind a single `Trainer` class (dispatched b
 ## Installation
 
 ```bash
-git clone <repo>
+git clone https://github.com/TomasMajer12/Master-thesis.git
 cd Master-thesis
 pip install -e .
 ```
